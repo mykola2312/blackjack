@@ -18,3 +18,15 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 blackjack: $(BLACKJACK_OBJ) $(BLACKJACK_DEPS)
 	$(CC) $(LDFLAGS) -o $(BIN_DIR)/$@ $(BLACKJACK_OBJ)
+
+.PHONY: all clean debug
+
+all: blackjack
+
+debug: CXXFLAGS += -DDEBUG -g
+debug: LDFLAGS += -g
+debug: all
+
+clean:
+	rm $(OBJ_DIR)/*.o
+	rm $(BIN_DIR)/*
