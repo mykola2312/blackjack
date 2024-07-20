@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,21 +37,39 @@ int main(int argc, char** argv)
 
     print_process(parent);
 
-    // get threads
+    // find active thread
+    puts("Looking for active thread..");
+    
     process_status_t* threads = NULL;
     size_t thread_count = 0;
-    if (process_get_threads(parent->pid, &threads, &thread_count))
+    
+    process_status_t* active;
+    while (1)
     {
-        fputs("failed to obtain process threads\n", stderr);
-        free(list);
-        return 1;
+        if (process_get_threads(parent->pid, &threads, &thread_count))
+        {
+            fputs("failed to obtain process threads\n", stderr);
+            free(list);
+            return 1;
+        }
+
+        if (find_active_thread(threads, thread_count, &active))
+        {
+            // no active threads - free list and continue
+            free(threads);
+            usleep(500*1000);
+        }
+        else
+        {
+            // we got active thread!
+            break;
+        }
     }
 
-    puts("Threads:");
-    for (size_t i = 0; i < thread_count; i++)
-        print_process(&threads[i]);
-    
-    free(list);
+    puts("Active thread:");
+    print_process(active);
+
     free(threads);
+    free(list);
     return 0;
 }

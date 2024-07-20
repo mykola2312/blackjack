@@ -42,7 +42,9 @@ __attribute__((noreturn)) void* slave3_job(void*)
     puts("[slave3] will do something each second but in a thread");
     while (1)
     {
-        __asm__("nop");
+        unsigned a = 3;
+        for (unsigned i = 0; i < 100000; i++)
+            a = a * 3 - a;
         sleep(1);
     }
 }

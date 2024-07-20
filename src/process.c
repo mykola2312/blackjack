@@ -67,6 +67,9 @@ static int is_numeric(const char* str)
 
 int processes_by_name(const char* name, process_status_t** list, size_t* count)
 {
+    *list = NULL;
+    *count = 0;
+
     DIR* proc = opendir("/proc");
     if (!proc) return 1;
 
@@ -140,6 +143,9 @@ int determine_parent_process(process_status_t* list, size_t count, process_statu
 
 int process_get_threads(pid_t pid, process_status_t** list, size_t* count)
 {
+    *list = NULL;
+    *count = 0;
+
     char taskPath[256] = {0};
     snprintf(taskPath, sizeof(taskPath), "/proc/%d/task", pid);
 
@@ -186,4 +192,23 @@ int process_get_threads(pid_t pid, process_status_t** list, size_t* count)
 
     closedir(taskDir);
     return 0;
+}
+
+int is_considered_active(process_state_t state)
+{
+    return state == INTERRUPTIBLE_SLEEP || state == RUNNING;
+}
+
+int find_active_thread(process_status_t* list, size_t count, process_status_t** thread)
+{
+    for (size_t i = 0; i < count; i++)
+    {
+        TRACE("task %d state %d\n", list[i].pid, list[i].state);
+        if (is_considered_active(list[i].state))
+        {
+            *thread = &list[i];
+            return 0;
+        }
+    }
+    return 1;
 }

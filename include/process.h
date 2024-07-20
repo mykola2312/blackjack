@@ -46,4 +46,10 @@ int determine_parent_process(process_status_t* list, size_t count, process_statu
 // get all process threads. for list and count same rules applies as for processes_by_name
 int process_get_threads(pid_t pid, process_status_t** list, size_t* count);
 
+// returns 1 if state considered active for a process/thread
+int is_considered_active(process_state_t state);
+
+// find any active (running) thread and returns 0 and success, otherwise non zero
+int find_active_thread(process_status_t* list, size_t count, process_status_t** thread);
+
 #endif
