@@ -24,8 +24,15 @@ int main(int argc, char** argv)
     size_t count = 0;
 
     processes_by_name("dummy_target", &list, &count);
-    for (size_t i = 0; i < count; i++)
-        print_process(&list[i]);
+    process_status_t* parent;
+    if (determine_parent_process(list, count, &parent))
+    {
+        fputs("unable to determine parent process. exiting", stderr);
+        free(list);
+        return 1;
+    }
+
+    print_process(parent);
     
     free(list);
     return 0;

@@ -112,3 +112,28 @@ int processes_by_name(const char* name, process_status_t** list, size_t* count)
     closedir(proc);
     return 0;
 }
+
+static process_status_t* process_by_pid_in_list(pid_t pid, process_status_t* list, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+        if (list[i].pid == pid) return &list[i];
+    
+    return NULL;
+}
+
+int determine_parent_process(process_status_t* list, size_t count, process_status_t** parent)
+{
+    // we're gonna find any process that doesnt have parent in this list,
+    // that means we hit real parent, not descendant
+    for (size_t i = 0; i < count; i++)
+    {
+        if (!process_by_pid_in_list(list[i].ppid, list, count))
+        {
+            // that's real parent
+            *parent = &list[i];
+            return 0;
+        }
+    }
+
+    return 1;
+}
