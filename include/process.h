@@ -28,6 +28,13 @@ typedef struct {
     gid_t gid;
 } process_status_t;
 
+// parse process status from procfs. returns 0 no errors and 1 on any kind of error
+// error information obtain from errno
 int process_parse_status(pid_t pid, process_status_t* status);
+
+// find any process that matches name, case insensitive.
+// list pointer must point to NULL-initialized pointer, and count pointer must pount to initialized 0
+// will skip any process which status couldn't be parsed 
+int processes_by_name(const char* name, process_status_t** list, size_t* count);
 
 #endif
