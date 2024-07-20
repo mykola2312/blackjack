@@ -28,7 +28,7 @@ __attribute__((noreturn)) void slave2_job()
     status("slave2");
 
     puts("[slave2] will do something each second");
-    while (true)
+    while (1)
     {
         __asm__("nop");
         sleep(1);
@@ -40,13 +40,11 @@ __attribute__((noreturn)) void* slave3_job(void*)
     status("slave3");
 
     puts("[slave3] will do something each second but in a thread");
-    while (true)
+    while (1)
     {
         __asm__("nop");
         sleep(1);
     }
-
-    return NULL;
 }
 
 int main()
