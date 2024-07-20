@@ -5,13 +5,13 @@ BIN_DIR				=	bin
 
 CC					=	gcc
 LD					=	ld
-CFLAGS			=	-Wall -I$(INC_DIR)
+CFLAGS				=	-Wall -I$(INC_DIR)
 LDFLAGS				=
 
 BLACKJACK_SRC		=	main.c process.c
 BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.c,%.o,$(BLACKJACK_SRC)))
 BLACKJACK_SRC		:=	$(addprefix $(SRC_DIR)/,$(BLACKJACK_SRC))
-BLACKJACK_DEPS		=	process.h
+BLACKJACK_DEPS		=	debug.h process.h
 BLACKJACK_DEPS		:=	$(addprefix $(INC_DIR)/,$(BLACKJACK_DEPS))
 
 DUMMY_TARGET_SRC	=	dummy_target.c
@@ -33,10 +33,10 @@ TARGETS				=	blackjack dummy_target
 
 all: $(TARGETS)
 
-debug: CXXFLAGS += -DDEBUG -g
+debug: CFLAGS += -DDEBUG -g
 debug: LDFLAGS += -g
 debug: $(TARGETS)
 
 clean:
-	rm $(OBJ_DIR)/*.o
-	rm $(BIN_DIR)/*
+	rm -f $(OBJ_DIR)/*.o
+	rm -f $(BIN_DIR)/*
