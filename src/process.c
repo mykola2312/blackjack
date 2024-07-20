@@ -1,6 +1,7 @@
 #define _DEFAULT_SOURCE
 #include "process.h"
 #include "debug.h"
+#include <sys/capability.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -211,4 +212,27 @@ int find_active_thread(process_status_t* list, size_t count, process_status_t** 
         }
     }
     return 1;
+}
+
+int check_ptrace_permissions()
+{
+    if (!geteuid())
+    {
+        // we're running as root
+        return 1;
+    }
+
+    // otherwise, check CAPS
+    cap_t cap = cap_get_pid(getpid());
+    cap_flag_value_t cap_flag_value;
+    
+    if (cap)
+    {
+        if (!cap_get_flag(cap, CAP_SYS_ADMIN, CAP_EFFECTIVE, &cap_flag_value))
+            if (cap_flag_value == CAP_SET) return 1;
+        if (!cap_get_flag(cap, CAP_SYS_ADMIN, CAP_PERMITTED, &cap_flag_value))
+            if (cap_flag_value == CAP_SET) return 1;
+    }
+
+    return 0;
 }

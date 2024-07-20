@@ -71,5 +71,13 @@ int main(int argc, char** argv)
 
     free(threads);
     free(list);
+
+    if (!check_ptrace_permissions())
+    {
+        fputs("this process doesn't have permission to ptrace.\n", stderr);
+        fputs("either run as root or set caps.\n", stderr);
+        return 1;
+    }
+    
     return 0;
 }

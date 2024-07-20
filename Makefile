@@ -6,7 +6,7 @@ BIN_DIR				=	bin
 CC					=	gcc
 LD					=	ld
 CFLAGS				=	-Wall -I$(INC_DIR)
-LDFLAGS				=
+LDFLAGS				=	-lcap
 
 BLACKJACK_SRC		=	main.c process.c
 BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.c,%.o,$(BLACKJACK_SRC)))

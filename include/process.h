@@ -52,4 +52,7 @@ int is_considered_active(process_state_t state);
 // find any active (running) thread and returns 0 and success, otherwise non zero
 int find_active_thread(process_status_t* list, size_t count, process_status_t** thread);
 
+// check if this process has any capability or is ran as root to be able to ptrace attach
+int check_ptrace_permissions();
+
 #endif
