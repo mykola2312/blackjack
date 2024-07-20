@@ -38,9 +38,12 @@ int process_parse_status(pid_t pid, process_status_t* status);
 // deallocate list with free later
 int processes_by_name(const char* name, process_status_t** list, size_t* count);
 
-// will determine parent process amongst children and set parent pointer to element in list
+// determine parent process amongst children and set parent pointer to element in list
 // process list must consist of parent and children processes,
 // obtained from processes_by_name call. of course parent pointer shouldn't be NULL
 int determine_parent_process(process_status_t* list, size_t count, process_status_t** parent);
+
+// get all process threads. for list and count same rules applies as for processes_by_name
+int process_get_threads(pid_t pid, process_status_t** list, size_t* count);
 
 #endif

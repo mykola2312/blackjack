@@ -23,17 +23,34 @@ int main(int argc, char** argv)
     process_status_t* list = NULL;
     size_t count = 0;
 
+    // find process
     processes_by_name("dummy_target", &list, &count);
+    // get real parent
     process_status_t* parent;
     if (determine_parent_process(list, count, &parent))
     {
-        fputs("unable to determine parent process. exiting", stderr);
+        fputs("unable to determine parent process. exiting\n", stderr);
         free(list);
         return 1;
     }
 
     print_process(parent);
+
+    // get threads
+    process_status_t* threads = NULL;
+    size_t thread_count = 0;
+    if (process_get_threads(parent->pid, &threads, &thread_count))
+    {
+        fputs("failed to obtain process threads\n", stderr);
+        free(list);
+        return 1;
+    }
+
+    puts("Threads:");
+    for (size_t i = 0; i < thread_count; i++)
+        print_process(&threads[i]);
     
     free(list);
+    free(threads);
     return 0;
 }

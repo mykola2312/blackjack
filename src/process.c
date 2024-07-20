@@ -137,3 +137,53 @@ int determine_parent_process(process_status_t* list, size_t count, process_statu
 
     return 1;
 }
+
+int process_get_threads(pid_t pid, process_status_t** list, size_t* count)
+{
+    char taskPath[256] = {0};
+    snprintf(taskPath, sizeof(taskPath), "/proc/%d/task", pid);
+
+    DIR* taskDir = opendir(taskPath);
+    if (!taskDir) return 1;
+
+    struct dirent* entry;
+    while ((entry = readdir(taskDir)))
+    {
+        if (entry->d_type != DT_DIR) continue;
+        if (!is_numeric(entry->d_name)) continue;
+
+        pid_t pid = strtod(entry->d_name, NULL);
+        process_status_t status = {};
+        if (process_parse_status(pid, &status))
+        {
+            // if we can't some threads, we should fail completely
+            // failure is better than incomplete info
+            TRACE("failed to parse %d task status\n", pid);
+            closedir(taskDir);
+            return 1;
+        }
+
+        // add thread to list
+        process_status_t* _list = *list;
+        size_t _count = *count;
+
+        if (_count) _list = (process_status_t*)realloc(_list, ++_count * sizeof(process_status_t));
+        else _list = (process_status_t*)malloc(++_count * sizeof(process_status_t));
+
+        if (!_list)
+        {
+            TRACE("out of memory for process status!\n");
+            closedir(taskDir);
+            return 1;
+        }
+
+        // copy thread to list
+        memcpy(&_list[_count - 1], &status, sizeof(process_status_t));
+
+        *list = _list;
+        *count = _count;
+    }
+
+    closedir(taskDir);
+    return 0;
+}
