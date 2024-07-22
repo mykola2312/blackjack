@@ -49,9 +49,16 @@ __attribute__((noreturn)) void* slave3_job(void*)
     }
 }
 
+__attribute__((noreturn)) void* hijack_destination(void*)
+{
+    puts("thread has been redirected to this function! cool!");
+    while (1) sleep(1);
+}
+
 int main()
 {
     status("master");
+    printf("hijack_destination: %p\n", hijack_destination);
 
     pid_t slave1 = fork();
     if (!slave1) slave1_job();
