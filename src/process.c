@@ -2,6 +2,8 @@
 #include "process.h"
 #include "debug.h"
 #include <sys/capability.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -235,4 +237,45 @@ int check_ptrace_permissions()
     }
 
     return 0;
+}
+
+int process_attach_all(process_status_t* threads, size_t thread_count)
+{
+    for (size_t i = 0; i < thread_count; i++)
+    {
+        pid_t pid = threads[i].pid;
+        if (ptrace(PTRACE_ATTACH, pid, NULL, NULL) < 0)
+        {
+            // we've encountered error. now we must detach from attached and return 1
+            process_detach_all(threads, i+1);
+            return 1;
+        }
+
+        // now wait for thread to be stopped
+        int wstatus;
+        do {
+            waitpid(pid, &wstatus, 0);
+#if DEBUG
+            if (WIFEXITED(wstatus)) {
+                TRACE("exited, status=%d\n", WEXITSTATUS(wstatus));
+            } else if (WIFSIGNALED(wstatus)) {
+                TRACE("killed by signal %d\n", WTERMSIG(wstatus));
+            } else if (WIFSTOPPED(wstatus)) {
+                TRACE("stopped by signal %d\n", WSTOPSIG(wstatus));
+            } else if (WIFCONTINUED(wstatus)) {
+                TRACE("continued\n");
+            }
+
+#endif
+        } while (!(WIFSTOPPED(wstatus) && WSTOPSIG(wstatus) == SIGSTOP));
+
+        // since thread is properly stopped we can continue to the next one
+    }
+
+    return 0;
+}
+
+void process_detach_all(process_status_t* threads, size_t thread_count)
+{
+    while (thread_count--) ptrace(PTRACE_DETACH, threads[thread_count].pid, NULL, NULL);
 }

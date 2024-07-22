@@ -1,7 +1,9 @@
 #define _DEFAULT_SOURCE
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "process.h"
 
 void print_process(process_status_t* proc)
@@ -69,15 +71,31 @@ int main(int argc, char** argv)
     puts("Active thread:");
     print_process(active);
 
-    free(threads);
-    free(list);
-
     if (!check_ptrace_permissions())
     {
         fputs("this process doesn't have permission to ptrace.\n", stderr);
         fputs("either run as root or set caps.\n", stderr);
         return 1;
     }
+
+    // attach
+    if (process_attach_all(threads, thread_count))
+    {
+        fprintf(stderr, "failed to attach: %s\n", strerror(errno));
+        
+        free(threads);
+        free(list);
+        
+        return 1;
+    }
+    
+    puts("attached to all threads. press any key");
+    getc(stdin);
+
+    process_detach_all(threads, thread_count);
+    
+    free(threads);
+    free(list);
     
     return 0;
 }

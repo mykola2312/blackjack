@@ -55,4 +55,10 @@ int find_active_thread(process_status_t* list, size_t count, process_status_t** 
 // check if this process has any capability or is ran as root to be able to ptrace attach
 int check_ptrace_permissions();
 
+// attach to all threads of the process. on error returns 1 and detaches from already attached
+int process_attach_all(process_status_t* threads, size_t thread_count);
+
+// detaches from all threads
+void process_detach_all(process_status_t* threads, size_t thread_count);
+
 #endif
