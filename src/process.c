@@ -290,7 +290,9 @@ int process_read_registers(process_status_t* thread, struct user_regs_struct* re
     };
     memset(regs, '\0', sizeof(struct user_regs_struct));
 
-    return ptrace(PTRACE_GETREGSET, thread->pid, NT_PRSTATUS, &data) < 0;
+    long ret = ptrace(PTRACE_GETREGSET, thread->pid, NT_PRSTATUS, &data);
+    print_registers(regs);
+    return ret < 0;
 }
 
 int process_write_registers(process_status_t* thread, const struct user_regs_struct* regs)
@@ -300,5 +302,7 @@ int process_write_registers(process_status_t* thread, const struct user_regs_str
         .iov_len = sizeof(struct user_regs_struct)
     };
 
-    return ptrace(PTRACE_SETREGSET, thread->pid, NT_PRSTATUS, &data) < 0;
+    long ret = ptrace(PTRACE_SETREGSET, thread->pid, NT_PRSTATUS, &data);
+    print_registers(regs);
+    return ret < 0;
 }
