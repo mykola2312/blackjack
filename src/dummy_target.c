@@ -49,11 +49,7 @@ __attribute__((noreturn)) void* slave3_job(void*)
     }
 }
 
-__attribute__((noreturn)) void* hijack_destination(void*)
-{
-    puts("thread has been redirected to this function! cool!");
-    while (1) sleep(1);
-}
+extern void hijack_destination();
 
 int main()
 {

@@ -4,22 +4,27 @@ OBJ_DIR				=	obj
 BIN_DIR				=	bin
 
 CC					=	gcc
+AS					=	as
 LD					=	ld
 CFLAGS				=	-Wall -I$(INC_DIR)
-LDFLAGS				=	-lcap
+ASFLAGS				=
+LDFLAGS				=	-z noexecstack -lcap
 
 BLACKJACK_SRC		=	main.c process.c
-BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.c,%.o,$(BLACKJACK_SRC)))
+BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(BLACKJACK_SRC))))
 BLACKJACK_SRC		:=	$(addprefix $(SRC_DIR)/,$(BLACKJACK_SRC))
 BLACKJACK_DEPS		=	debug.h process.h
 BLACKJACK_DEPS		:=	$(addprefix $(INC_DIR)/,$(BLACKJACK_DEPS))
 
-DUMMY_TARGET_SRC	=	dummy_target.c
-DUMMY_TARGET_OBJ	:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.c,%.o,$(DUMMY_TARGET_SRC)))
+DUMMY_TARGET_SRC	=	dummy_target.c dummy_destination.s
+DUMMY_TARGET_OBJ	:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(DUMMY_TARGET_SRC))))
 DUMMY_TARGET_SRC	:=	$(addprefix $(SRC_DIR)/,$(DUMMY_TARGET_SRC))
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
+	$(AS) $(ASFLAGS) -o $@ $<
 
 blackjack: $(BLACKJACK_OBJ) $(BLACKJACK_DEPS)
 	$(CC) $(LDFLAGS) -o $(BIN_DIR)/$@ $(BLACKJACK_OBJ)
@@ -35,6 +40,7 @@ all: $(TARGETS)
 
 debug: CFLAGS += -DDEBUG -g
 debug: LDFLAGS += -g
+debug: ASFLAGS += -g
 debug: $(TARGETS)
 
 clean:
