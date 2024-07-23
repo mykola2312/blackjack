@@ -4,6 +4,8 @@
 #include <sys/capability.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/uio.h>
+#include <linux/elf.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -278,4 +280,25 @@ int process_attach_all(process_status_t* threads, size_t thread_count)
 void process_detach_all(process_status_t* threads, size_t thread_count)
 {
     while (thread_count--) ptrace(PTRACE_DETACH, threads[thread_count].pid, NULL, NULL);
+}
+
+int process_read_registers(process_status_t* thread, struct user_regs_struct* regs)
+{
+    struct iovec data = {
+        .iov_base = regs,
+        .iov_len = sizeof(struct user_regs_struct)
+    };
+    memset(regs, '\0', sizeof(struct user_regs_struct));
+
+    return ptrace(PTRACE_GETREGSET, thread->pid, NT_PRSTATUS, &data) < 0;
+}
+
+int process_write_registers(process_status_t* thread, const struct user_regs_struct* regs)
+{
+    struct iovec data = {
+        .iov_base = (void*)regs,
+        .iov_len = sizeof(struct user_regs_struct)
+    };
+
+    return ptrace(PTRACE_SETREGSET, thread->pid, NT_PRSTATUS, &data) < 0;
 }

@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "process.h"
 
@@ -89,8 +90,17 @@ int main(int argc, char** argv)
         return 1;
     }
     
-    puts("attached to all threads. press any key");
-    getc(stdin);
+    puts("attached to all threads. please enter address of destination");
+    void* destination;
+    scanf("%p", &destination);
+
+    struct user_regs_struct regs;
+    if (process_read_registers(active, &regs))
+        fprintf(stderr, "failed to read registers: %s\n", strerror(errno));
+    // hijack instruction pointer to our destination
+    regs.rip = (uintptr_t)destination;
+    if (process_write_registers(active, &regs))
+        fprintf(stderr, "failed to write registers: %s\n", strerror(errno));
 
     process_detach_all(threads, thread_count);
     
