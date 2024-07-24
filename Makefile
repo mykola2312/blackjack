@@ -18,6 +18,12 @@ RTDISASM_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_SRC))
 RTDISASM_DEPS		=	rtdisasm.h
 RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS))
 
+RTDISASM_TEST_SRC		=	rtdisasm_test.c
+RTDISASM_TEST_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_TEST_SRC))))
+RTDISASM_TEST_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_TEST_SRC))
+RTDISASM_TEST_DEPS		=
+RTDISASM_TEST_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_TEST_DEPS)) rtdisasm
+
 BLACKJACK_SRC		=	main.c process.c
 BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(BLACKJACK_SRC))))
 BLACKJACK_SRC		:=	$(addprefix $(SRC_DIR)/,$(BLACKJACK_SRC))
@@ -37,6 +43,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 rtdisasm: $(RTDISASM_OBJ) $(RTDISASM_DEPS)
 	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(RTDISASM_OBJ)
 
+rtdisasm_test: $(RTDISASM_TEST_OBJ) $(RTDISASM_TEST_DEPS)
+	$(CC) $(LDFLAGS) $(LIB_DIR)/librtdisasm.a -o $(BIN_DIR)/$@ $(RTDISASM_TEST_OBJ)
+
 blackjack: $(BLACKJACK_OBJ) $(BLACKJACK_DEPS)
 	$(CC) $(LDFLAGS) $(LIB_DIR)/librtdisasm.a -o $(BIN_DIR)/$@ $(BLACKJACK_OBJ)
 
@@ -45,7 +54,7 @@ dummy_target: $(DUMMY_TARGET_OBJ)
 
 .PHONY: all clean debug
 
-TARGETS				=	blackjack dummy_target
+TARGETS				=	blackjack dummy_target rtdisasm_test
 
 all: $(TARGETS)
 
