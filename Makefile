@@ -8,14 +8,15 @@ CC					=	gcc
 AS					=	as
 AR					=	ar
 LD					=	ld
+GZIP				=	gzip
 CFLAGS				=	-Wall -I$(INC_DIR)
 ASFLAGS				=
 LDFLAGS				=	-z noexecstack -lcap
 
 RTDISASM_SRC		=	rtdisasm.c
-RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC))))
+RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC)))) $(OBJ_DIR)/rtdisasm_table.o
 RTDISASM_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_SRC))
-RTDISASM_DEPS		=	rtdisasm.h
+RTDISASM_DEPS		=	rtdisasm.h rtdisasm_table.h
 RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS))
 
 RTDISASM_TEST_SRC		=	rtdisasm_test.c
@@ -36,6 +37,10 @@ DUMMY_TARGET_SRC	:=	$(addprefix $(SRC_DIR)/,$(DUMMY_TARGET_SRC))
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+# compressed C files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cgz
+	$(GZIP) -d -c $< | $(CC) -x c $(CFLAGS) -c -o $@ -
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $<
