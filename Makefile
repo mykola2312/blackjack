@@ -8,13 +8,13 @@ CC					=	gcc
 AS					=	as
 AR					=	ar
 LD					=	ld
-GZIP				=	gzip
+PYTHON				=	python
 CFLAGS				=	-Wall -I$(INC_DIR)
 ASFLAGS				=
 LDFLAGS				=	-z noexecstack -lcap
 
 RTDISASM_SRC		=	rtdisasm.c
-RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC)))) $(OBJ_DIR)/rtdisasm_table.o
+RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC))))
 RTDISASM_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_SRC))
 RTDISASM_DEPS		=	rtdisasm.h rtdisasm_table.h
 RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS))
@@ -38,15 +38,12 @@ DUMMY_TARGET_SRC	:=	$(addprefix $(SRC_DIR)/,$(DUMMY_TARGET_SRC))
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# compressed C files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cgz
-	$(GZIP) -d -c $< | $(CC) -x c $(CFLAGS) -c -o $@ -
-
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
 rtdisasm: $(RTDISASM_OBJ) $(RTDISASM_DEPS)
-	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(RTDISASM_OBJ)
+	$(PYTHON) genc.py | $(CC) -x c $(CFLAGS) -c -o $(OBJ_DIR)/rtdisasm_table.o -
+	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(RTDISASM_OBJ) $(OBJ_DIR)/rtdisasm_table.o
 
 rtdisasm_test: $(RTDISASM_TEST_OBJ) $(RTDISASM_TEST_DEPS)
 	$(CC) $(LDFLAGS) $(LIB_DIR)/librtdisasm.a -o $(BIN_DIR)/$@ $(RTDISASM_TEST_OBJ)
