@@ -42,7 +42,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
 rtdisasm: $(RTDISASM_OBJ) $(RTDISASM_DEPS)
-	$(PYTHON) genc.py | $(CC) -x c $(CFLAGS) -c -o $(OBJ_DIR)/rtdisasm_table.o -
+	$(PYTHON) genc.py xml/raw/x86/Intel/AZ.xml | $(CC) -x c $(CFLAGS) -c -o $(OBJ_DIR)/rtdisasm_table.o -
 	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(RTDISASM_OBJ) $(OBJ_DIR)/rtdisasm_table.o
 
 rtdisasm_test: $(RTDISASM_TEST_OBJ) $(RTDISASM_TEST_DEPS)

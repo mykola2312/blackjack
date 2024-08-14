@@ -1,4 +1,5 @@
 import re
+import sys
 import xml.etree.ElementTree as ET
 from enum import Enum
 
@@ -55,9 +56,9 @@ class InstructionCommon:
     BYTES_REGEX = re.compile("([0-9A-F][0-9A-F])")
     DIGIT_REGEX = re.compile("\\/(\\d)")
     MODRM_REGEX = re.compile("\\/r")
-    IMM_REGEX = re.compile("i(.)")
-    VALUE_REGEX = re.compile("c(.)")
-    OPREG_REGEX = re.compile("r(.)")
+    IMM_REGEX = re.compile("i([b,w,d,o])")
+    VALUE_REGEX = re.compile("c([b,w,d,p,o,t])")
+    OPREG_REGEX = re.compile("r([b,w,d,o])")
 
 class StandardInstruction(Instruction):
     def __init__(self, ins):
@@ -82,7 +83,12 @@ class StandardInstruction(Instruction):
         if rex: self.rex = rex.group(1)
         if digit: self.digit = int(digit.group(1))
         if modrm: self.modrm = True
-        if imm: self.imm = imm.group(1)
+        
+        if imm:
+            self.imm = imm.group(1)
+        elif "imm8" in self._opc: # because intel keeps breaking their own convention
+            self.imm = "b"
+        
         if value: self.value = value.group(1)
         if opreg: self.opreg = opreg.group(1)
     
@@ -218,8 +224,29 @@ def parse_file(path):
     groups = [InstructionGroup(common) for common in root.iter("common")]
     return groups
 
-# TODO: instead of gzipping pipe directly C code into GCC
-# FIXME: instruction_t has no actual rex, imm, value values
+def convert_rex(rex):
+    if rex == "B": return 0
+    elif rex == "X": return 1
+    elif rex == "R": return 2
+    elif rex == "W": return 3
+    else: raise RuntimeError(f"convert_rex failed for {rex}")
+
+def convert_imm(imm):
+    if imm == "b": return 0
+    elif imm == "w": return 1
+    elif imm == "d": return 2
+    elif imm == "o": return 3
+    else: raise RuntimeError(f"convert_imm failed for {imm}")
+
+def convert_value(value):
+    if value == "b": return 0
+    elif value == "w": return 1
+    elif value == "d": return 2
+    elif value == "p": return 3
+    elif value == "o": return 4
+    elif value == "t": return 5
+    else: raise RuntimeError(f"convert_value failed for {value}")
+
 def generate_table(groups):
     table_len = 0
     # header
@@ -230,16 +257,29 @@ def generate_table(groups):
         for i in group.instructions:
             opcode = ",".join(["0x{}".format(byte) for byte in i.bytes])
             opcode_len = len(i.bytes)
-            print("\t{{ .info = {{ .type = {}, .has_rex = {}, .has_digit = {}, .has_modrm = {}, .has_imm = {}, .has_value = {}, .has_opreg = {} }}, .opcode_len = {}, .opcode = {{ {} }}  }},".format(
-                i.get_type().value(), int(i.has_rex()), int(i.has_digit()), int(i.has_modrm()), int(i.has_imm()), int(i.has_value()), int(i.has_opreg()), opcode_len, opcode
-            ))
+            print("\t{{ .config = {{ .type = {}, .has_rex = {}, .has_digit = {}, .has_modrm = {}, .has_imm = {}, .has_value = {}, .has_opreg = {} }}, ".format(
+                i.get_type().value(), int(i.has_rex()), int(i.has_digit()), int(i.has_modrm()), int(i.has_imm()), int(i.has_value()), int(i.has_opreg())
+                ), end = '')
+            
+            if i.get_type() == InstructionType.STANDARD:
+                print(" .std = {{ .rex = {}, .digit = {}, .imm = {}, .value = {} }},".format(
+                    convert_rex(i.rex) if i.has_rex() else 0,
+                    int(i.digit) if i.has_digit() else 0,
+                    convert_imm(i.imm) if i.has_imm() else 0,
+                    convert_value(i.value) if i.has_value() else 0
+                ), end = '')
+            print(" .opcode_len = {}, .opcode = {{ {} }}  }},".format(opcode_len, opcode))
             table_len += 1
     # footer
     print("}};\n\nconst unsigned rtdisasm_table_len = {};".format(table_len))
 
 if __name__ == "__main__":
-    groups = parse_file("xml/raw/x86/Intel/AZ.xml")
-    #groups.extend(parse_file("xml/raw/x86/Intel/AVX512_r22.xml"))
-    #groups.extend(parse_file("xml/raw/x86/Intel/AVX512_r24.xml"))
+    groups = []
+    for filename in sys.argv[1:]:
+        groups.extend(parse_file(filename))
+
+    if not groups:
+        print("no instructions were parsed!", file=sys.stderr)
+        sys.exit(1)
 
     generate_table(groups)
