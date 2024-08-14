@@ -268,6 +268,21 @@ def generate_table(groups):
                     convert_imm(i.imm) if i.has_imm() else 0,
                     convert_value(i.value) if i.has_value() else 0
                 ), end = '')
+            elif i.get_type() == InstructionType.VEX:
+                print(" .vex = {{ .lig = {}, .l = {}, .wig = {}, .w = {} }},".format(
+                    int(i.lig),
+                    i.l,
+                    int(i.wig),
+                    int(i.w)
+                ), end = '')
+            elif i.get_type() == InstructionType.EVEX:
+                print(" .evex = {{ .lig = {}, .l = {}, .wig = {}, .w = {} }},".format(
+                    int(i.lig),
+                    i.l,
+                    int(i.wig),
+                    int(i.w)
+                ), end = '')
+
             print(" .opcode_len = {}, .opcode = {{ {} }}  }},".format(opcode_len, opcode))
             table_len += 1
     # footer
