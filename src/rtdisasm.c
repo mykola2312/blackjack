@@ -66,7 +66,7 @@ static int test_vex_prefix(const uint8_t vex_first)
 // returns -1 if not rex, and non-negative is REX_* define
 static int test_rex_prefix(const uint8_t rex)
 {
-    if (rex & REX_MASK != REX_SIG) return -1;
+    if ((rex & REX_MASK) != REX_SIG) return -1;
     
     const uint8_t rex_value = rex & REX_VALUE_MASK;
     switch (rex_value)
@@ -113,7 +113,7 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
             }
 
             // now let's match the opreg encoded byte
-            if (cur[plain_len] & OPREG_MASK != ins->opcode[plain_len])
+            if ((cur[plain_len] & OPREG_MASK) != ins->opcode[plain_len])
                 continue;
         }
         else
@@ -179,7 +179,7 @@ static void analyze_modrm(const uint8_t modrm, uint8_t* has_sib, uint8_t* disp_l
     // set proper values
     for (unsigned i = 0; i < modrm_encodings_len; i++)
     {
-        modrm_encoding_t* encoding = &modrm_encodings[i];
+        const modrm_encoding_t* encoding = &modrm_encodings[i];
         if (encoding->mod == mod && encoding->rm == rm)
         {
             *has_sib = encoding->has_sib;
@@ -196,6 +196,8 @@ static unsigned imm2length(uint8_t imm)
         case IMM_W: return 2;
         case IMM_D: return 4;
         case IMM_O: return 8;
+        
+        default: return 0;
     }
 }
 
@@ -209,6 +211,8 @@ static unsigned value2length(uint8_t value)
         case VALUE_P: return 6;
         case VALUE_O: return 8;
         case VALUE_T: return 10;
+        
+        default: return 0;
     }
 }
 
