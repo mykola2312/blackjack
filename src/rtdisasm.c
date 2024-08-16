@@ -1,5 +1,6 @@
 #include "rtdisasm.h"
 #include "rtdisasm_table.h"
+#include <string.h>
 
 // prefix definitions. must be declared with macro in order
 // to be readable later in prefix table
@@ -44,6 +45,16 @@ static int is_std_prefix(const uint8_t prefix)
     return 0;
 }
 
+#define VEX_2BYTE       0xC5
+#define VEX_3BYTE       0xC4
+
+static int test_vex_prefix(const uint8_t vex_first)
+{
+    if (vex_first == VEX_2BYTE) return 2;
+    else if (vex_first == VEX_3BYTE) return 3;
+    else return 0;
+}
+
 #define REX_SIG         0b01000000
 #define REX_MASK        0b11110000
 #define REX_VALUE_MASK  0b00001111
@@ -69,18 +80,33 @@ static int test_rex_prefix(const uint8_t rex)
     return -1;
 }
 
-// returns -1 if reached end, 0 if no instruction found,
-// and non-zero is actual instruction length 
-static int match_instruction(const uint8_t* cur, const uint8_t* const end, instruction_t* ins)
+const instruction_t* find_instruction(const uint8_t* cur, unsigned type, int vex, int rex)
 {
-    // test if its rex prefix, if so we will look specifically for
-    // instructions with rex prefix
-    int rex = test_rex_prefix(*cur);
-    if (rex != -1)
+    for (unsigned i = 0; i < rtdisasm_table_len; i++)
     {
-        // it's rex, so advance 1 byte
-        if (++cur == end) return -1;
+        const instruction_t* ins = &rtdisasm_table[i];
+
+        if (ins->config.type != type) continue;
+        // check rex if instruction does rex, and if provided rex is not -1
+        if (rex != -1   && type == INSTRUCTION_STD 
+                        && ins->config.has_rex && ins->std.rex != rex)
+        {
+            // rex doesn't match, skip instruction
+            continue;
+        }
+
+        // compare opcodes
+        if (memcmp(cur, &ins->opcode, ins->opcode_len))
+        {
+            // opcodes don't match up, skip
+            continue;
+        }
+
+        // for now, everything looks good, so that's our instruction
+        return ins;
     }
+
+    return NULL;
 }
 
 int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
@@ -92,8 +118,29 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
     // skip standard prefixes
     while (is_std_prefix(*cur))
     {
-        if (++cur == end) return 0;
+        if (++cur == end) return -1;
     }
 
-    // now we need to taste instructions
+    unsigned type = INSTRUCTION_STD;
+
+    // first, we need to test vex prefix, because only then comes the rex
+    int vex = test_vex_prefix(*cur);
+    if (vex)
+    {
+        // it's vex, lets advance 2 or 3 bytes
+        cur += vex;
+        if (cur >= end) return -1;
+        type = INSTRUCTION_VEX;
+    }
+
+    // test if its rex prefix, if so we will look specifically for
+    // instructions with rex prefix
+    int rex = test_rex_prefix(*cur);
+    if (rex != -1)
+    {
+        // it's rex, so advance 1 byte
+        if (++cur >= end) return -1;
+    }
+
+    const instruction_t* ins = find_instruction(cur, type, vex, rex);
 }
