@@ -46,7 +46,7 @@ rtdisasm: $(RTDISASM_OBJ) $(RTDISASM_DEPS)
 	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(RTDISASM_OBJ) $(OBJ_DIR)/rtdisasm_table.o
 
 rtdisasm_test: $(RTDISASM_TEST_OBJ) $(RTDISASM_TEST_DEPS)
-	$(CC) $(LDFLAGS) $(LIB_DIR)/librtdisasm.a -o $(BIN_DIR)/$@ $(RTDISASM_TEST_OBJ)
+	$(CC) $(LDFLAGS) -o $(BIN_DIR)/$@ $(RTDISASM_TEST_OBJ) $(LIB_DIR)/librtdisasm.a
 
 blackjack: $(BLACKJACK_OBJ) $(BLACKJACK_DEPS)
 	$(CC) $(LDFLAGS) $(LIB_DIR)/librtdisasm.a -o $(BIN_DIR)/$@ $(BLACKJACK_OBJ)
