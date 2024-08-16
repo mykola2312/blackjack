@@ -166,7 +166,7 @@ static const unsigned modrm_encodings_len = sizeof(modrm_encodings) / sizeof(mod
 
 // analyze ModRM and determine if it employs SIB byte,
 // as well as any displacements
-static void analyzy_modrm(const uint8_t modrm, uint8_t* has_sib, uint8_t* disp_len)
+static void analyze_modrm(const uint8_t modrm, uint8_t* has_sib, uint8_t* disp_len)
 {
     const uint8_t mod = modrm >> 6;
     const uint8_t rm = modrm & 0b111;
@@ -185,6 +185,30 @@ static void analyzy_modrm(const uint8_t modrm, uint8_t* has_sib, uint8_t* disp_l
             *has_sib = encoding->has_sib;
             *disp_len = encoding->disp_len;
         } 
+    }
+}
+
+static unsigned imm2length(uint8_t imm)
+{
+    switch (imm)
+    {
+        case IMM_B: return 1;
+        case IMM_W: return 2;
+        case IMM_D: return 4;
+        case IMM_O: return 8;
+    }
+}
+
+static unsigned value2length(uint8_t value)
+{
+    switch (value)
+    {
+        case VALUE_B: return 1;
+        case VALUE_W: return 2;
+        case VALUE_D: return 4;
+        case VALUE_P: return 6;
+        case VALUE_O: return 8;
+        case VALUE_T: return 10;
     }
 }
 
@@ -230,5 +254,37 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
 
     // if instruction has ModRM, we need to analyze it,
     // since it can lead to SIB byte
-    // if (ins->config.has_modrm)
+    if (ins->config.has_modrm)
+    {
+        // consume ModRM byte
+        uint8_t modrm = *cur++;
+        if (cur >= end) return -1;
+
+        uint8_t has_sib, disp_len;
+        analyze_modrm(modrm, &has_sib, &disp_len);
+
+        if (has_sib)
+        {
+            // consume SIB byte
+            if (++cur >= end) return -1;
+        }
+
+        // add displacement
+        cur += disp_len;
+        if (cur >= end) return -1;
+    }
+
+    // now we need to skip the immediate values
+    if (type == INSTRUCTION_STD)
+    {
+        if (ins->config.has_imm)
+            cur += imm2length(ins->std.imm);
+        else if (ins->config.has_value)
+            cur += value2length(ins->std.value);
+        
+        if (cur >= end) return -1;
+    }
+
+    // return length of entire decoded instruction
+    return (int)((uintptr_t)cur-(uintptr_t)code);
 }
