@@ -19,7 +19,7 @@ RTDISASM_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_SRC))
 RTDISASM_DEPS		=	rtdisasm.h rtdisasm_table.h
 RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS))
 
-RTDISASM_TEST_SRC		=	rtdisasm_test.c
+RTDISASM_TEST_SRC		=	rtdisasm_test.c rtdisasm_test_data.s
 RTDISASM_TEST_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_TEST_SRC))))
 RTDISASM_TEST_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_TEST_SRC))
 RTDISASM_TEST_DEPS		=
