@@ -1,4 +1,4 @@
-.section .rodata
+.text
 .globl test_1
 .globl test_1_end
 
