@@ -1,4 +1,5 @@
 #include "rtdisasm.h"
+#include "rtdisasm_table.h"
 
 // prefix definitions. must be declared with macro in order
 // to be readable later in prefix table
@@ -41,4 +42,58 @@ static int is_std_prefix(const uint8_t prefix)
         if (prefix == std_prefixes[i]) return 1;
     
     return 0;
+}
+
+#define REX_SIG         0b01000000
+#define REX_MASK        0b11110000
+#define REX_VALUE_MASK  0b00001111
+#define REX_B_VALUE     (1<<0)
+#define REX_X_VALUE     (1<<1)
+#define REX_R_VALUE     (1<<2)
+#define REX_W_VALUE     (1<<3)
+
+// returns -1 if not rex, and non-negative is REX_* define
+static int test_rex_prefix(const uint8_t rex)
+{
+    if (rex & REX_MASK != REX_SIG) return -1;
+    
+    const uint8_t rex_value = rex & REX_VALUE_MASK;
+    switch (rex_value)
+    {
+        case REX_B_VALUE: return REX_B;
+        case REX_X_VALUE: return REX_X;
+        case REX_R_VALUE: return REX_R;
+        case REX_W_VALUE: return REX_W;
+    }
+
+    return -1;
+}
+
+// returns -1 if reached end, 0 if no instruction found,
+// and non-zero is actual instruction length 
+static int match_instruction(const uint8_t* cur, const uint8_t* const end, instruction_t* ins)
+{
+    // test if its rex prefix, if so we will look specifically for
+    // instructions with rex prefix
+    int rex = test_rex_prefix(*cur);
+    if (rex != -1)
+    {
+        // it's rex, so advance 1 byte
+        if (++cur == end) return -1;
+    }
+}
+
+int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
+{
+    const uint8_t* cur = code;
+    const uint8_t* const end = code + size;
+    if (cur == end) return 0;
+
+    // skip standard prefixes
+    while (is_std_prefix(*cur))
+    {
+        if (++cur == end) return 0;
+    }
+
+    // now we need to taste instructions
 }
