@@ -80,7 +80,10 @@ static int test_rex_prefix(const uint8_t rex)
     return -1;
 }
 
-const instruction_t* find_instruction(const uint8_t* cur, unsigned type, int vex, int rex)
+// so we can ignore register encoded in opcode
+#define OPREG_MASK      0b11111000
+
+static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, int vex, int rex)
 {
     for (unsigned i = 0; i < rtdisasm_table_len; i++)
     {
@@ -95,11 +98,32 @@ const instruction_t* find_instruction(const uint8_t* cur, unsigned type, int vex
             continue;
         }
 
-        // compare opcodes
-        if (memcmp(cur, &ins->opcode, ins->opcode_len))
+        if (ins->config.has_modrm)
         {
-            // opcodes don't match up, skip
-            continue;
+            // instruction encoding employs register embedded into last opcode byte
+            // so we need to apply bit mask
+            
+            // plain means opcode bytes that are not affected
+            // by opcode register encoding
+            uint16_t plain_len = ins->opcode_len - 1;
+            if (plain_len)
+            {
+                if (memcmp(cur, &ins->opcode, plain_len))
+                    continue;
+            }
+
+            // now let's match the opreg encoded byte
+            if (cur[plain_len] & OPREG_MASK != ins->opcode[plain_len])
+                continue;
+        }
+        else
+        {
+            // just compare opcodes
+            if (memcmp(cur, &ins->opcode, ins->opcode_len))
+            {
+                // opcodes don't match up, skip
+                continue;
+            }
         }
 
         // for now, everything looks good, so that's our instruction
@@ -113,7 +137,7 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
 {
     const uint8_t* cur = code;
     const uint8_t* const end = code + size;
-    if (cur == end) return 0;
+    if (cur == end) return -1;
 
     // skip standard prefixes
     while (is_std_prefix(*cur))
@@ -143,4 +167,13 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
     }
 
     const instruction_t* ins = find_instruction(cur, type, vex, rex);
+    if (!ins) return 0; // no instruction
+
+    // since we now instruction, we need advance past opcode bytes
+    cur += ins->opcode_len;
+    if (cur >= end) return -1;
+
+    // if instruction has ModRM, we need to analyze it,
+    // since it can lead to SIB byte
+    // if (ins->config.has_modrm)
 }
