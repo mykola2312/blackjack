@@ -133,6 +133,61 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
     return NULL;
 }
 
+typedef struct {
+    uint8_t mod;
+    uint8_t rm;
+    uint8_t has_sib;
+    uint8_t disp_len;
+} modrm_encoding_t;
+
+static const modrm_encoding_t modrm_encodings[] = {
+    { .mod = 0b00, .rm = 0b100, .has_sib = 1, .disp_len = 0 },
+    { .mod = 0b00, .rm = 0b101, .has_sib = 0, .disp_len = 4 },
+
+    { .mod = 0b01, .rm = 0b000, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b001, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b010, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b011, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b100, .has_sib = 1, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b101, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b110, .has_sib = 0, .disp_len = 1 },
+    { .mod = 0b01, .rm = 0b111, .has_sib = 0, .disp_len = 1 },
+
+    { .mod = 0b10, .rm = 0b000, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b001, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b010, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b011, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b100, .has_sib = 1, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b101, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b110, .has_sib = 0, .disp_len = 4 },
+    { .mod = 0b10, .rm = 0b111, .has_sib = 0, .disp_len = 4 },
+};
+static const unsigned modrm_encodings_len = sizeof(modrm_encodings) / sizeof(modrm_encoding_t);
+
+// analyze ModRM and determine if it employs SIB byte,
+// as well as any displacements
+static void analyzy_modrm(const uint8_t modrm, uint8_t* has_sib, uint8_t* disp_len)
+{
+    const uint8_t mod = modrm >> 6;
+    const uint8_t rm = modrm & 0b111;
+
+    // default values
+    *has_sib = 0;
+    *disp_len = 0;
+
+    // now lets look up in table and if matches
+    // set proper values
+    for (unsigned i = 0; i < modrm_encodings_len; i++)
+    {
+        modrm_encoding_t* encoding = &modrm_encodings[i];
+        if (encoding->mod == mod && encoding->rm == rm)
+        {
+            *has_sib = encoding->has_sib;
+            *disp_len = encoding->disp_len;
+        } 
+    }
+}
+
 int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
 {
     const uint8_t* cur = code;
