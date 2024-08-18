@@ -1,5 +1,7 @@
 #include "rtdisasm.h"
 #include "rtdisasm_table.h"
+#include "debug.h"
+#include <stdio.h>
 #include <string.h>
 
 // prefix definitions. must be declared with macro in order
@@ -216,6 +218,19 @@ static unsigned value2length(uint8_t value)
     }
 }
 
+#ifdef DEBUG
+static void print_opcodes(const instruction_t* ins)
+{
+    fprintf(stderr, "opcodes ");
+    for (unsigned i = 0; i < ins->opcode_len; i++)
+        fprintf(stderr, "%02X ", ins->opcode[i]);
+    
+    fprintf(stderr, "\n");
+}
+#else
+#define print_opcodes(ins)
+#endif
+
 int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
 {
     const uint8_t* cur = code;
@@ -240,6 +255,8 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
         type = INSTRUCTION_VEX;
     }
 
+    TRACE("type %d vex %d\n", type, vex);
+
     // test if its rex prefix, if so we will look specifically for
     // instructions with rex prefix
     int rex = test_rex_prefix(*cur);
@@ -249,8 +266,12 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
         if (++cur >= end) return -1;
     }
 
+    TRACE("rex %d\n", rex);
+
     const instruction_t* ins = find_instruction(cur, type, vex, rex);
     if (!ins) return 0; // no instruction
+
+    print_opcodes(ins);
 
     // since we now instruction, we need advance past opcode bytes
     cur += ins->opcode_len;
@@ -266,6 +287,7 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
 
         uint8_t has_sib, disp_len;
         analyze_modrm(modrm, &has_sib, &disp_len);
+        TRACE("modrm %02X has_sib %u disp_len %u\n", modrm, has_sib, disp_len);
 
         if (has_sib)
         {
