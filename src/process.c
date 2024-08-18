@@ -1,6 +1,7 @@
 #define _DEFAULT_SOURCE
 #include "process.h"
 #include "debug.h"
+#include "process_debug.h"
 #include <sys/capability.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>

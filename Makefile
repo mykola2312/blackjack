@@ -31,7 +31,7 @@ RTDISASM_TEST_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_TEST_DEPS)) $(SHARED_D
 BLACKJACK_SRC		=	main.c process.c
 BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(BLACKJACK_SRC)))) $(SHARED_OBJ)
 BLACKJACK_SRC		:=	$(addprefix $(SRC_DIR)/,$(BLACKJACK_SRC))
-BLACKJACK_DEPS		=	process.h
+BLACKJACK_DEPS		=	process.h process_debug.h
 BLACKJACK_DEPS		:=	$(addprefix $(INC_DIR)/,$(BLACKJACK_DEPS)) rtdisasm $(SHARED_DEPS)
 
 DUMMY_TARGET_SRC	=	dummy_target.c dummy_destination.s
