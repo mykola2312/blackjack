@@ -13,23 +13,26 @@ CFLAGS				=	-Wall -I$(INC_DIR)
 ASFLAGS				=
 LDFLAGS				=	-z noexecstack -lcap
 
+SHARED_OBJ			=
+SHARED_DEPS			=	$(INC_DIR)/debug.h
+
 RTDISASM_SRC		=	rtdisasm.c
-RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC))))
+RTDISASM_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_SRC)))) $(SHARED_OBJ)
 RTDISASM_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_SRC))
 RTDISASM_DEPS		=	rtdisasm.h rtdisasm_table.h
-RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS))
+RTDISASM_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_DEPS)) $(SHARED_DEPS)
 
 RTDISASM_TEST_SRC		=	rtdisasm_test.c rtdisasm_test_data.s
 RTDISASM_TEST_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(RTDISASM_TEST_SRC))))
 RTDISASM_TEST_SRC		:=	$(addprefix $(SRC_DIR)/,$(RTDISASM_TEST_SRC))
 RTDISASM_TEST_DEPS		=
-RTDISASM_TEST_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_TEST_DEPS)) rtdisasm
+RTDISASM_TEST_DEPS		:=	$(addprefix $(INC_DIR)/,$(RTDISASM_TEST_DEPS)) $(SHARED_DEPS) rtdisasm
 
 BLACKJACK_SRC		=	main.c process.c
-BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(BLACKJACK_SRC))))
+BLACKJACK_OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(BLACKJACK_SRC)))) $(SHARED_OBJ)
 BLACKJACK_SRC		:=	$(addprefix $(SRC_DIR)/,$(BLACKJACK_SRC))
-BLACKJACK_DEPS		=	debug.h process.h
-BLACKJACK_DEPS		:=	$(addprefix $(INC_DIR)/,$(BLACKJACK_DEPS)) rtdisasm
+BLACKJACK_DEPS		=	process.h
+BLACKJACK_DEPS		:=	$(addprefix $(INC_DIR)/,$(BLACKJACK_DEPS)) rtdisasm $(SHARED_DEPS)
 
 DUMMY_TARGET_SRC	=	dummy_target.c dummy_destination.s
 DUMMY_TARGET_OBJ	:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(DUMMY_TARGET_SRC))))
