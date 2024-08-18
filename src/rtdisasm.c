@@ -100,7 +100,7 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
             continue;
         }
 
-        if (ins->config.has_modrm)
+        if (ins->config.has_opreg)
         {
             // instruction encoding employs register embedded into last opcode byte
             // so we need to apply bit mask

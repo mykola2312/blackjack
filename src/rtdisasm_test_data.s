@@ -3,8 +3,7 @@
 .globl test_1_end
 
 test_1:
-    lock
-    mov %gs:(%rbx), %rax
+    push %rbp
 
     nop # target that rtdisasm must reach
 test_1_end:
