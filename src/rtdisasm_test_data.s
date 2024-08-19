@@ -6,5 +6,14 @@ test_1:
     push %rax
     push (%rbp)
 
-    nop # target that rtdisasm must reach
+    # rt targets
+    nop
+    
+    ret
+    ret $0x1234
+
+    int3
+    int $0x80
+    sysenter
+    syscall
 test_1_end:
