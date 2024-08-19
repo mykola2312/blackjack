@@ -219,16 +219,26 @@ static unsigned value2length(uint8_t value)
 }
 
 #ifdef DEBUG
-static void print_opcodes(const instruction_t* ins)
+static void print_instruction(const instruction_t* ins)
 {
-    fprintf(stderr, "opcodes ");
+    TRACE("type %u has_rex %u has_digit %u has_modrm %u has_imm %u has_value %u has_opreg %u",
+        ins->config.type,
+        ins->config.has_rex,
+        ins->config.has_digit,
+        ins->config.has_modrm,
+        ins->config.has_imm,
+        ins->config.has_value,
+        ins->config.has_opreg
+    );
+
+    fprintf(stderr, " opcodes ");
     for (unsigned i = 0; i < ins->opcode_len; i++)
         fprintf(stderr, "%02X ", ins->opcode[i]);
     
     fprintf(stderr, "\n");
 }
 #else
-#define print_opcodes(ins)
+#define print_instruction(ins)
 #endif
 
 int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instruction_t** found)
@@ -255,8 +265,6 @@ int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instructio
         type = INSTRUCTION_VEX;
     }
 
-    TRACE("type %d vex %d\n", type, vex);
-
     // test if its rex prefix, if so we will look specifically for
     // instructions with rex prefix
     int rex = test_rex_prefix(*cur);
@@ -266,16 +274,16 @@ int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instructio
         if (++cur >= end) return -1;
     }
 
-    TRACE("rex %d\n", rex);
-
     const instruction_t* ins = find_instruction(cur, type, vex, rex);
     if (!ins) return 0; // no instruction
 
-    print_opcodes(ins);
+    print_instruction(ins);
+    TRACE("type %d rex %d vex %d\n", type, rex, vex);
 
-    // since we now instruction, we need advance past opcode bytes
+    // since we found instruction, we need advance past opcode bytes
     cur += ins->opcode_len;
-    if (cur >= end) return -1;
+    // don't check here for size limit, sicne size could be 1
+    // and opcode length 1 byte also
 
     // if instruction has ModRM, we need to analyze it,
     // since it can lead to SIB byte
@@ -329,8 +337,10 @@ int rtdisasm_find_target(const uint8_t* code, unsigned size, unsigned rt_target)
         int len = rtdisasm_analyze_single(cur, remaining, &ins);
         // NOTE: this is ret passthru from analyze single,
         // so it must be follow same ret logic as this function
+        TRACE("rtdisasm_analyze_single len %d\n", len);
         if (len < 1) return len;
 
+        TRACE("ins->rt_target %u rt_target %u\n", ins->rt_target, rt_target);
         if (ins->rt_target == rt_target)
         {
             // we found target instruction!
