@@ -231,7 +231,7 @@ static void print_opcodes(const instruction_t* ins)
 #define print_opcodes(ins)
 #endif
 
-int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
+int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instruction_t** found)
 {
     const uint8_t* cur = code;
     const uint8_t* const end = code + size;
@@ -311,6 +311,35 @@ int rtdisasm_analyze_single(const uint8_t* code, uint8_t size)
         if (cur >= end) return -1;
     }
 
+    // set found
+    if (found) *found = ins;
     // return length of entire decoded instruction
     return (int)((uintptr_t)cur-(uintptr_t)code);
+}
+
+int rtdisasm_find_target(const uint8_t* code, unsigned size, unsigned rt_target)
+{
+    const uint8_t* cur = code;
+    const uint8_t* const end = code + size;
+    unsigned remaining = size;
+    if (cur == end) return -1;
+
+    do {
+        const instruction_t* ins;
+        int len = rtdisasm_analyze_single(cur, remaining, &ins);
+        // NOTE: this is ret passthru from analyze single,
+        // so it must be follow same ret logic as this function
+        if (len < 1) return len;
+
+        if (ins->rt_target == rt_target)
+        {
+            // we found target instruction!
+            return (int)((uintptr_t)cur-(uintptr_t)code);
+        }
+
+        // otherwise, advance further
+        cur += len;
+        remaining -= len;
+        if (cur >= end) return -1;
+    } while (1);
 }
