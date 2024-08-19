@@ -30,7 +30,8 @@ class Instruction:
         "CD ib"         : 5,
         "0F 34"         : 6,
         "0F 05"         : 7,
-        "F3 0F 1E FA"   : 8
+        "F3 0F 1E FB"   : 8,
+        "F3 0F 1E FA"   : 9
     }
 
     def __init__(self, ins):
@@ -349,6 +350,7 @@ if __name__ == "__main__":
     
     # add custom instructions
     groups.append(CustomInstructionGroup([
+        "F3 0F 1E FB", # endbr32
         "F3 0F 1E FA" # endbr64
     ]))
 

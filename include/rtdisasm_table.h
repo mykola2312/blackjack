@@ -36,7 +36,8 @@
 #define RT_TARGET_INT_N         5   // CD ib
 #define RT_TARGET_SYSENTER      6   // 0F 34
 #define RT_TARGET_SYSCALL       7   // 0F 05
-#define RT_TARGET_ENDBR64       8   // F3 0F 1E FA
+#define RT_TARGET_ENDBR32       8   // F3 0F 1E FB
+#define RT_TARGET_ENDBR64       9   // F3 0F 1E FA
 
 #define MAX_OPCODE_LEN          4
 
