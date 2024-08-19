@@ -3,6 +3,7 @@
 .globl test_1_end
 
 test_1:
+    push %rax
     push (%rbp)
 
     nop # target that rtdisasm must reach

@@ -312,11 +312,15 @@ int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instructio
     if (type == INSTRUCTION_STD)
     {
         if (ins->config.has_imm)
+        {
             cur += imm2length(ins->std.imm);
+            if (cur >= end) return -1;
+        }
         else if (ins->config.has_value)
+        {
             cur += value2length(ins->std.value);
-        
-        if (cur >= end) return -1;
+            if (cur >= end) return -1;
+        }
     }
 
     // set found
