@@ -24,6 +24,16 @@
 #define VALUE_O                 4
 #define VALUE_T                 5
 
+// these are target instructions that rtdisasm will look for
+#define RT_TARGET_NO_MEANING    0
+#define RT_TARGET_NOP           1   // 90
+#define RT_TARGET_RET           2   // C3
+#define RT_TARGET_RET_N         3   // C2 iw
+#define RT_TARGET_INT3          4   // CC
+#define RT_TARGET_INT_N         5   // CD ib
+#define RT_TARGET_SYSENTER      6   // 0F 34
+#define RT_TARGET_SYSCALL       7   // 0F 05
+
 #define MAX_OPCODE_LEN          4
 
 typedef struct {
@@ -61,6 +71,8 @@ typedef struct {
             uint16_t imm        : 3;
         } evex;
     };
+
+    uint16_t rt_target;
     
     uint16_t opcode_len;
     uint8_t opcode[MAX_OPCODE_LEN];

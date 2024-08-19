@@ -19,6 +19,16 @@ class InstructionType(Enum):
         elif self == InstructionType.EVEX: return 2
 
 class Instruction:
+    RT_TARGETS = {
+        "90"    : 1,
+        "C3"    : 2,
+        "C2 iw" : 3,
+        "CC"    : 4,
+        "CD ib" : 5,
+        "0F 34" : 6,
+        "0F 05" : 7,
+    }
+
     def __init__(self, ins):
         self._opc = ins.find("opc").text
         self.x32m = ins.attrib["x32m"]
@@ -47,6 +57,9 @@ class Instruction:
 
     def has_opreg(self):
         return False
+
+    def encode_rt_target(self):
+        return Instruction.RT_TARGETS.get(self._opc, 0)
 
     def __str__(self):
         return f"<{self.get_type()}> {self.mnemonic} bytes {self.bytes} rex {self.has_rex()} digit {self.has_digit()} modrm {self.has_modrm()} imm {self.has_imm()} value {self.has_value()} opreg {self.has_opreg()}"
@@ -283,7 +296,7 @@ def generate_table(groups):
                     int(i.w)
                 ), end = '')
 
-            print(" .opcode_len = {}, .opcode = {{ {} }}  }},".format(opcode_len, opcode))
+            print(" .rt_target = {}, .opcode_len = {}, .opcode = {{ {} }}  }},".format(i.encode_rt_target(), opcode_len, opcode))
             table_len += 1
     # footer
     print("}};\n\nconst unsigned rtdisasm_table_len = {};".format(table_len))
