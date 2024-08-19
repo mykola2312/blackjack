@@ -4,7 +4,7 @@ Software to inject .so libraries into running process
 
 For Linux and FreeBSD
 
-## Compnents
+## Components
 
 blackjack consists of multiple components that are responsible for different tasks.
 
