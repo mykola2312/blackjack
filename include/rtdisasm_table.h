@@ -6,6 +6,9 @@
 #define INSTRUCTION_STD         0
 #define INSTRUCTION_VEX         1
 #define INSTRUCTION_EVEX        2
+// so there is special group for instructions like endbr64
+// that are just dumb memcmp matches
+#define INSTRUCTION_CUSTOM      3
 
 #define REX_B                   0
 #define REX_X                   1
@@ -33,6 +36,7 @@
 #define RT_TARGET_INT_N         5   // CD ib
 #define RT_TARGET_SYSENTER      6   // 0F 34
 #define RT_TARGET_SYSCALL       7   // 0F 05
+#define RT_TARGET_ENDBR64       8   // F3 0F 1E FA
 
 #define MAX_OPCODE_LEN          4
 

@@ -45,10 +45,10 @@ int main()
     printf("RT_TARGET_SYSENTER %d\n", rtdisasm_find_target((const uint8_t*)test_1, size, RT_TARGET_SYSENTER));
     printf("RT_TARGET_SYSCALL %d\n", rtdisasm_find_target((const uint8_t*)test_1, size, RT_TARGET_SYSCALL));
     
-    printf("== TEST 2 ==\n");
+    printf("\n== TEST 2 ==\n");
     size = (uintptr_t)test_2_end - (uintptr_t)test_2;
     printf("size %lu\n", size);
-    
+
     printf("test2 %d\n", rtdisasm_find_target((const uint8_t*)test_2, size, RT_TARGET_NOP));
 
     return 0;

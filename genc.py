@@ -7,26 +7,30 @@ class InstructionType(Enum):
     STANDARD = 0
     VEX = 1
     EVEX = 2
+    CUSTOM = 3
 
     def __str__(self):
         if self == InstructionType.STANDARD: return "std"
         elif self == InstructionType.VEX: return "vex"
         elif self == InstructionType.EVEX: return "evex"
+        elif self == InstructionType.CUSTOM: "custom"
 
     def value(self):
         if self == InstructionType.STANDARD: return 0
         elif self == InstructionType.VEX: return 1
         elif self == InstructionType.EVEX: return 2
+        elif self == InstructionType.CUSTOM: return 3
 
 class Instruction:
     RT_TARGETS = {
-        "90"    : 1,
-        "C3"    : 2,
-        "C2 iw" : 3,
-        "CC"    : 4,
-        "CD ib" : 5,
-        "0F 34" : 6,
-        "0F 05" : 7,
+        "90"            : 1,
+        "C3"            : 2,
+        "C2 iw"         : 3,
+        "CC"            : 4,
+        "CD ib"         : 5,
+        "0F 34"         : 6,
+        "0F 05"         : 7,
+        "F3 0F 1E FA"   : 8
     }
 
     def __init__(self, ins):
@@ -219,6 +223,34 @@ class EVEXInstruction(Instruction):
     def has_imm(self):
         return self.imm is not None
 
+# a dummy implementation for custom instruction entries like ENDBR64
+
+class CustomInstruction(Instruction):
+    def __init__(self, opc):
+        self._opc = opc
+        self.bytes = opc.split(" ")
+
+    def get_type(self):
+        return InstructionType.CUSTOM
+
+    def has_rex(self):
+        return False
+
+    def has_digit(self):
+        return False
+    
+    def has_modrm(self):
+        return False
+
+    def has_imm(self):
+        return False
+
+    def has_value(self):
+        return False
+
+    def has_opreg(self):
+        return False
+
 def parse_instruction(ins):
     opc = ins.find("opc").text
     if "EVEX" in opc: return EVEXInstruction(ins)
@@ -229,6 +261,11 @@ class InstructionGroup:
     def __init__(self, common):
         self.brief = common.find("brief").text
         self.instructions = [parse_instruction(ins) for ins in common.iter("ins")]
+
+class CustomInstructionGroup:
+    def __init__(self, opcode_lines):
+        self.brief = "<custom>"
+        self.instructions = [CustomInstruction(opc) for opc in opcode_lines]
 
 def parse_file(path):
     tree = ET.parse(path)
@@ -309,5 +346,10 @@ if __name__ == "__main__":
     if not groups:
         print("no instructions were parsed!", file=sys.stderr)
         sys.exit(1)
+    
+    # add custom instructions
+    groups.append(CustomInstructionGroup([
+        "F3 0F 1E FA" # endbr64
+    ]))
 
     generate_table(groups)

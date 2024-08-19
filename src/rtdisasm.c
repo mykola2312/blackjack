@@ -90,6 +90,10 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
     for (unsigned i = 0; i < rtdisasm_table_len; i++)
     {
         const instruction_t* ins = &rtdisasm_table[i];
+        // always skip special instructions because
+        // they require seoarate parsing
+        if (ins->config.type == INSTRUCTION_CUSTOM)
+            continue;
 
         if (ins->config.type != type) continue;
         // check rex if instruction does rex, and if provided rex is not -1
@@ -110,7 +114,7 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
             uint16_t plain_len = ins->opcode_len - 1;
             if (plain_len)
             {
-                if (memcmp(cur, &ins->opcode, plain_len))
+                if (memcmp(cur, ins->opcode, plain_len))
                     continue;
             }
 
@@ -121,7 +125,7 @@ static const instruction_t* find_instruction(const uint8_t* cur, unsigned type, 
         else
         {
             // just compare opcodes
-            if (memcmp(cur, &ins->opcode, ins->opcode_len))
+            if (memcmp(cur, ins->opcode, ins->opcode_len))
             {
                 // opcodes don't match up, skip
                 continue;
@@ -241,11 +245,44 @@ static void print_instruction(const instruction_t* ins)
 #define print_instruction(ins)
 #endif
 
+// we don't do here size limits because special instruction
+// opcode byte sequences are unique, and if they cross boundaris
+// the moment it returns back to analyze_single there will be
+// size limit checks anyway.
+const instruction_t* is_special_instruction(const uint8_t* code)
+{
+    for (unsigned i = 0; i < rtdisasm_table_len; i++)
+    {
+        const instruction_t* ins = &rtdisasm_table[i];
+        if (ins->config.type != INSTRUCTION_CUSTOM)
+            continue;
+        
+        // just dumb memcmp match
+        if (!memcmp(code, ins->opcode, ins->opcode_len))
+            return ins;
+    }
+
+    return NULL;
+}
+
 int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instruction_t** found)
 {
     const uint8_t* cur = code;
     const uint8_t* const end = code + size;
     if (cur == end) return -1;
+
+    // look for any special instructions first
+    {
+        const instruction_t* special = is_special_instruction(code);
+        if (special)
+        {
+            TRACE("found special instruction\n");
+            print_instruction(special);
+
+            if (found) *found = special;
+            return special->opcode_len;
+        }
+    }
 
     // skip standard prefixes
     while (is_std_prefix(*cur))
