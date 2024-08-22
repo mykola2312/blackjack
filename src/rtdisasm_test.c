@@ -1,4 +1,5 @@
 #include "rtdisasm.h"
+#include <immintrin.h>
 #include <stdio.h>
 
 extern void test_1();
@@ -29,6 +30,17 @@ static unsigned int test_2(unsigned char *message)
 }
 static void test_2_end() {}
 
+// TEST 3 - VEX instructins
+static void test_3()
+{
+    __m256 evens = _mm256_set_ps(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0);
+    __m256 odds = _mm256_set_ps(1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0);
+
+    __m256 result = _mm256_sub_ps(evens, odds);
+    __asm__("nop"); // TARGET
+}
+static void test_3_end() {}
+
 int main()
 {
     printf("== TEST 1 ==\n");
@@ -50,6 +62,12 @@ int main()
     printf("size %lu\n", size);
 
     printf("test2 %d\n", rtdisasm_find_target((const uint8_t*)test_2, size, RT_TARGET_NOP));
+
+    printf("\n== TEST 3 ==\n");
+    size = (uintptr_t)test_3_end - (uintptr_t)test_3;
+    printf("size %lu\n", size);
+
+    printf("test3 %d\n", rtdisasm_find_target((const uint8_t*)test_3, size, RT_TARGET_NOP));
 
     return 0;
 }

@@ -265,10 +265,10 @@ const instruction_t* is_special_instruction(const uint8_t* code)
     return NULL;
 }
 
-int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instruction_t** found)
+int rtdisasm_analyze_single(const uint8_t* code, unsigned limit, const instruction_t** found)
 {
     const uint8_t* cur = code;
-    const uint8_t* const end = code + size;
+    const uint8_t* const end = code + limit;
     if (cur == end) return -1;
 
     // look for any special instructions first
@@ -366,11 +366,11 @@ int rtdisasm_analyze_single(const uint8_t* code, unsigned size, const instructio
     return (int)((uintptr_t)cur-(uintptr_t)code);
 }
 
-int rtdisasm_find_target(const uint8_t* code, unsigned size, unsigned rt_target)
+int rtdisasm_find_target(const uint8_t* code, unsigned limit, unsigned rt_target)
 {
     const uint8_t* cur = code;
-    const uint8_t* const end = code + size;
-    unsigned remaining = size;
+    const uint8_t* const end = code + limit;
+    unsigned remaining = limit;
     if (cur == end) return -1;
 
     do {
