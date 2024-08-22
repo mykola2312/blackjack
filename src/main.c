@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     if (process_read_registers(active, &regs))
         fprintf(stderr, "failed to read registers: %s\n", strerror(errno));
     // hijack instruction pointer to our destination
-    regs.rip = (uintptr_t)destination;
+    regs.rip = process_calculate_ip(active, (uintptr_t)destination);
     if (process_write_registers(active, &regs))
         fprintf(stderr, "failed to write registers: %s\n", strerror(errno));
 

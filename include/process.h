@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/user.h>
+#include <stdint.h>
 
 typedef enum {
     UNINTERRUPTABLE_SLEEP   = 'D',
@@ -61,6 +62,9 @@ int process_attach_all(process_status_t* threads, size_t thread_count);
 
 // detaches from all threads
 void process_detach_all(process_status_t* threads, size_t thread_count);
+
+// calculate correct instruction pointer address for hijacking
+uintptr_t process_calculate_ip(process_status_t* thread, uintptr_t addr);
 
 // read registers of thread. returns 0 on success, 1 on error
 int process_read_registers(process_status_t* thread, struct user_regs_struct* regs);

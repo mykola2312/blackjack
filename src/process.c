@@ -283,6 +283,14 @@ void process_detach_all(process_status_t* threads, size_t thread_count)
     while (thread_count--) ptrace(PTRACE_DETACH, threads[thread_count].pid, NULL, NULL);
 }
 
+// hardcoded syscall instruction size
+#define BJ_PTRACE_CONT_OFFSET 2
+
+uintptr_t process_calculate_ip(process_status_t* thread, uintptr_t addr)
+{
+    return addr + BJ_PTRACE_CONT_OFFSET;
+}
+
 int process_read_registers(process_status_t* thread, struct user_regs_struct* regs)
 {
     struct iovec data = {

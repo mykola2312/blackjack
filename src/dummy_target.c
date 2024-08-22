@@ -1,6 +1,10 @@
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/wait.h>
 #include <pthread.h>
+#include <signal.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 extern char *program_invocation_name;
@@ -51,8 +55,36 @@ __attribute__((noreturn)) void* slave3_job(void*)
 
 extern void hijack_destination();
 
+static struct sigaction sigill_old;
+static struct sigaction sigsegv_old;
+static void sigaction_handler(int signum, siginfo_t* info, void*)
+{
+    fprintf(stderr, "got signal %d\n", signum);
+    fprintf(stderr, "rip %p\n", info->si_addr);
+
+    exit(1);
+}
+
 int main()
 {
+    // lets install some signal handlers
+    // for sigsegv and sig illegal instruction
+    struct sigaction sa;
+
+    // sigill
+    memset(&sa, '\0', sizeof(sa));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = sigaction_handler;
+    sigaction(SIGILL, &sa, &sigill_old);
+
+    // sigsegv
+    memset(&sa, '\0', sizeof(sa));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = sigaction_handler;
+    sigaction(SIGSEGV, &sa, &sigsegv_old);
+
     status("master");
     printf("hijack_destination: %p\n", hijack_destination);
 
