@@ -18,4 +18,11 @@ int rtdisasm_analyze_single(const uint8_t* code, unsigned limit, const instructi
 // and non-zero integer is offset from "code"
 int rtdisasm_find_target(const uint8_t* code, unsigned limit, unsigned rt_target);
 
+// will analyze all instructions until "wanted" size of bytes is reached
+// within instruction boundaries, therefore making that address suitable
+// for patching and not break instruction fetching. on success returns
+// non-zero value - patch size, within instructions aligned,
+// returns 0 if unknown instruction met and -1 if "limit" is reached.
+int rtdisasm_estimate_patch(const uint8_t* code, unsigned limit, int wanted);
+
 #endif

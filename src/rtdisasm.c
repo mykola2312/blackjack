@@ -394,3 +394,32 @@ int rtdisasm_find_target(const uint8_t* code, unsigned limit, unsigned rt_target
         if (cur >= end) return -1;
     } while (1);
 }
+
+int rtdisasm_estimate_patch(const uint8_t* code, unsigned limit, int wanted)
+{
+    const uint8_t* cur = code;
+    const uint8_t* const end = code + limit;
+    unsigned remaining = limit;
+    unsigned patch = 0;
+    if (cur == end) return -1;
+
+    do {
+        const instruction_t* ins;
+        int len = rtdisasm_analyze_single(cur, remaining, &ins);
+        TRACE("rtdisasm_analyze_single len %d\n", len);
+        if (len < 1) return len;
+
+        // advance past instruction and check if we hit limit
+        // cuz we don't want patch on the limit
+        cur += len;
+        remaining -= len;
+        if (cur >= end) return -1;
+
+        // we're good, let's go until we have enough bytes for patch
+        patch += len;
+    } while(patch < wanted);
+
+    // at this point it should contain patch size
+    // aligned with instruction boundaries
+    return patch;
+}

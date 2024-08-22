@@ -37,6 +37,7 @@ static void test_3()
     __m256 odds = _mm256_set_ps(1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0);
 
     __m256 result = _mm256_sub_ps(evens, odds);
+    (void)result;
     __asm__("nop"); // TARGET
 }
 static void test_3_end() {}
@@ -68,6 +69,12 @@ int main()
     printf("size %lu\n", size);
 
     printf("test3 %d\n", rtdisasm_find_target((const uint8_t*)test_3, size, RT_TARGET_NOP));
+
+    printf("\n== TEST 4 ==\n");
+    printf("test1 patch %d\n", rtdisasm_estimate_patch((const uint8_t*)test_1, 16, 8));
+    printf("test2 patch %d\n", rtdisasm_estimate_patch((const uint8_t*)test_2, 16, 8));
+    printf("test3 patch %d\n", rtdisasm_estimate_patch((const uint8_t*)test_3, 16, 8));
+
 
     return 0;
 }
