@@ -71,7 +71,7 @@ static int is_numeric(const char* str)
     return 1;
 }
 
-int processes_by_name(const char* name, process_status_t** list, size_t* count)
+int process_by_name(const char* name, process_status_t** list, size_t* count)
 {
     *list = NULL;
     *count = 0;
@@ -130,7 +130,7 @@ static process_status_t* process_by_pid_in_list(pid_t pid, process_status_t* lis
     return NULL;
 }
 
-int determine_parent_process(process_status_t* list, size_t count, process_status_t** parent)
+int process_determine_parent(process_status_t* list, size_t count, process_status_t** parent)
 {
     // we're gonna find any process that doesnt have parent in this list,
     // that means we hit real parent, not descendant
@@ -200,17 +200,17 @@ int process_get_threads(pid_t pid, process_status_t** list, size_t* count)
     return 0;
 }
 
-int is_considered_active(process_state_t state)
+int process_is_considered_active(process_state_t state)
 {
     return state == INTERRUPTIBLE_SLEEP || state == RUNNING;
 }
 
-int find_active_thread(process_status_t* list, size_t count, process_status_t** thread)
+int process_find_active(process_status_t* list, size_t count, process_status_t** thread)
 {
     for (size_t i = 0; i < count; i++)
     {
         TRACE("task %d state %d\n", list[i].pid, list[i].state);
-        if (is_considered_active(list[i].state))
+        if (process_is_considered_active(list[i].state))
         {
             *thread = &list[i];
             return 0;
@@ -219,7 +219,7 @@ int find_active_thread(process_status_t* list, size_t count, process_status_t** 
     return 1;
 }
 
-int check_ptrace_permissions()
+int process_ptrace_permissions()
 {
     if (!geteuid())
     {

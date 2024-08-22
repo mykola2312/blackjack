@@ -28,10 +28,10 @@ int main(int argc, char** argv)
     size_t count = 0;
 
     // find process
-    processes_by_name("dummy_target", &list, &count);
+    process_by_name("dummy_target", &list, &count);
     // get real parent
     process_status_t* parent;
-    if (determine_parent_process(list, count, &parent))
+    if (process_determine_parent(list, count, &parent))
     {
         fputs("unable to determine parent process. exiting\n", stderr);
         free(list);
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        if (find_active_thread(threads, thread_count, &active))
+        if (process_find_active(threads, thread_count, &active))
         {
             // no active threads - free list and continue
             free(threads);
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     puts("Active thread:");
     print_process(active);
 
-    if (!check_ptrace_permissions())
+    if (!process_ptrace_permissions())
     {
         fputs("this process doesn't have permission to ptrace.\n", stderr);
         fputs("either run as root or set caps.\n", stderr);

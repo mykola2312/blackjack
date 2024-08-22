@@ -37,24 +37,24 @@ int process_parse_status(pid_t pid, process_status_t* status);
 // list pointer must point to NULL-initialized pointer, and count pointer must pount to initialized 0
 // will skip any process which status couldn't be parsed 
 // deallocate list with free later
-int processes_by_name(const char* name, process_status_t** list, size_t* count);
+int process_by_name(const char* name, process_status_t** list, size_t* count);
 
 // determine parent process amongst children and set parent pointer to element in list
 // process list must consist of parent and children processes,
 // obtained from processes_by_name call. of course parent pointer shouldn't be NULL
-int determine_parent_process(process_status_t* list, size_t count, process_status_t** parent);
+int process_determine_parent(process_status_t* list, size_t count, process_status_t** parent);
 
 // get all process threads. for list and count same rules applies as for processes_by_name
 int process_get_threads(pid_t pid, process_status_t** list, size_t* count);
 
 // returns 1 if state considered active for a process/thread
-int is_considered_active(process_state_t state);
+int process_is_considered_active(process_state_t state);
 
 // find any active (running) thread and returns 0 and success, otherwise non zero
-int find_active_thread(process_status_t* list, size_t count, process_status_t** thread);
+int process_find_active(process_status_t* list, size_t count, process_status_t** thread);
 
 // check if this process has any capability or is ran as root to be able to ptrace attach
-int check_ptrace_permissions();
+int process_ptrace_permissions();
 
 // attach to all threads of the process. on error returns 1 and detaches from already attached
 int process_attach_all(process_status_t* threads, size_t thread_count);
