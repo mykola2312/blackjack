@@ -1,6 +1,7 @@
 #define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/wait.h>
+#include <dlfcn.h>
 #include <pthread.h>
 #include <signal.h>
 #include <string.h>
@@ -67,6 +68,10 @@ static void sigaction_handler(int signum, siginfo_t* info, void*)
 
 int main()
 {
+    // print some info about libc
+    void* libc = dlopen("libc.so.6", RTLD_LOCAL);
+    printf("libc syscall %p\n", dlsym(libc, "syscall"));
+
     // lets install some signal handlers
     // for sigsegv and sig illegal instruction
     struct sigaction sa;
