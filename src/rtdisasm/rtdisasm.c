@@ -1,6 +1,6 @@
-#include "rtdisasm.h"
-#include "rtdisasm_table.h"
-#include "debug.h"
+#include "rtdisasm/rtdisasm.h"
+#include "rtdisasm/rtdisasm_table.h"
+#include "blackjack/debug.h"
 #include <stdio.h>
 #include <string.h>
 
