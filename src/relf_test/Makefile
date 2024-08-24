@@ -1,22 +1,26 @@
-NAME				=	rtdisasm
+NAME				=	relf_test
 
 CFLAGS				=	-Wall -I$(INC_DIR)
 ASFLAGS				=
 LDFLAGS				=	-z noexecstack
 
-SRC		=	rtdisasm.c
+SRC		=	relf_test.c relf_dummy.c
 OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(SRC))))
-DEPS	=	rtdisasm.h rtdisasm_table.h
+DEPS	=
 
 $(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(OBJ_DIR)/%.o: %.s
+	@mkdir -p $(OBJ_DIR)
+	$(AS) $(ASFLAGS) -o $@ $<
+
 .PHONY: all clean debug
 
 all: $(OBJ) $(DEPS)
-	$(PYTHON) genc.py xml/raw/x86/Intel/AZ.xml | $(CC) -x c $(CFLAGS) -c -o $(OBJ_DIR)/rtdisasm_table.o -
-	$(AR) -crs $(BIN_DIR)/librtdisasm.a $(OBJ) $(OBJ_DIR)/rtdisasm_table.o
+	$(CC) $(LDFLAGS) -shared -o $(BIN_DIR)/relf_dummy.so obj/relf_dummy.o
+	$(CC) $(LDFLAGS) -o $(BIN_DIR)/relf_test obj/relf_test.o $(LIB_DIR)/librelf.a
 
 debug: CFLAGS += -DDEBUG -g
 debug: LDFLAGS += -g

@@ -28,7 +28,7 @@ export MAKE
 export PYTHON
 
 # order matters here, build libraries first!
-TARGETS				=	rtdisasm rtdisasm_test dummy_target blackjack
+TARGETS				=	rtdisasm rtdisasm_test relf relf_test dummy_target blackjack
 
 .PHONY: $(TARGETS) debug clean
 
