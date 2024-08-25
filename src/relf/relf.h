@@ -2,12 +2,14 @@
 #define __RELF_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 // composite error type
 typedef enum {
-    RELF_MMAP_FAILED    = -4,   // file memory mapping failed
-    RELF_UNSUPPORTED    = -3,   // big endian or not x86/x86-64 architecture
-    RELF_NOT_AN_ELF     = -2,   // wrong magic
+    RELF_MMAP_FAILED    = -5,   // file memory mapping failed
+    RELF_UNSUPPORTED    = -4,   // big endian or not x86/x86-64 architecture
+    RELF_NOT_AN_ELF     = -3,   // wrong magic
+    RELF_TOO_BIG        = -2,   // file is over size_t limit
     RELF_FAILED_OPEN    = -1,   // failed to stat or open file
     RELF_OK             = 0,
 } relf_error_t;
@@ -26,8 +28,8 @@ typedef union {
 #define RELF_ERROR(e)       ((relf_value_t) {.error = e})
 
 typedef enum {
-    RELF_64BIT,
-    RELF_32BIT
+    RELF_32BIT,
+    RELF_64BIT
 } relf_type_t;
 
 // we're using our own structures so parsing
@@ -60,14 +62,29 @@ typedef struct {
 
     uint64_t f_offset;
     uint64_t f_size;
+
+    uint64_t v_addr;
+
+    uint32_t link;
+    uint32_t info;
+
+    // for symbol table will tell size of symbol entry
+    uint64_t entsize;
 } relf_section_t;
 
 // relf instance
 typedef struct {
     void* image;
+    size_t image_size;
 
     // is it 64 or 32 bit mode
     relf_type_t type;
+
+    unsigned segment_num;
+    unsigned section_num;
+
+    relf_segment_t* segments;
+    relf_section_t* sections;
 } relf_t;
 
 // opens ELF file, checks ELF magic and maps it into memory

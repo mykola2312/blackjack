@@ -6,7 +6,7 @@ LDFLAGS				=	-z noexecstack
 
 SRC		=	relf.c
 OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(SRC))))
-DEPS	=	relf.h
+DEPS	=	relf.h relf_debug.h
 
 $(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(OBJ_DIR)
