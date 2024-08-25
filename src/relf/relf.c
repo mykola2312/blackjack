@@ -174,7 +174,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             section->flags = hdr->sh_flags;
 
             // we will resolve names when string table is resolved
-            section->name = NULL;
+            section->si_name = hdr->sh_name;
 
             section->f_offset = hdr->sh_offset;
             section->f_size = hdr->sh_size;
@@ -185,8 +185,6 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             section->info = hdr->sh_info;
 
             section->entsize = hdr->sh_entsize;
-
-            TRACE_SECTION(section);
         }
     }
     else
@@ -202,7 +200,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             section->flags = hdr->sh_flags;
 
             // we will resolve names when string table is resolved
-            section->name = NULL;
+            section->si_name = hdr->sh_name;
 
             section->f_offset = hdr->sh_offset;
             section->f_size = hdr->sh_size;
@@ -213,8 +211,6 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             section->info = hdr->sh_info;
 
             section->entsize = hdr->sh_entsize;
-
-            TRACE_SECTION(section);
         }
     }
 
@@ -225,27 +221,26 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     else
         e_shstrndx = ((const Elf32_Ehdr*)relf->image)->e_shstrndx;
     
-    // NOTE: I should handle SHN_LORESERVE in e_phnum, e_shnum and e_shstrndx
-    // but that's non-existent use case when ELF has number of segments
-    // and sections that are exceeding uint16_t limit, so I don't care.
+    // resolve strings
     if (e_shstrndx != SHN_UNDEF)
     {
-        // we have string table, so to ease parsing
-        // we gonna allocate array of char pointers
-        // but first we need enumerate and find out
-        // how many strings there are
-        const char* cur = (const char*)
-            relf->image + relf->sections[e_shstrndx].f_offset;
-        const char* end = cur + relf->sections[e_shstrndx].f_size;
-        while (cur < end)
+        const char* strtab = (const char*)relf->image
+            + relf->sections[e_shstrndx].f_offset;
+        for (unsigned i = 0; i < relf->section_num; i++)
         {
-            TRACE("str %s\n", cur);
-            cur += strlen(cur) + 1;
-            relf->string_num++;
-        }
+            relf_section_t* section = &relf->sections[i];
+            section->name = strtab + section->si_name;
 
-        TRACE("string_num %u\n", relf->string_num);
+            TRACE_SECTION(section);
+        }
     }
     
     return RELF_ERROR(RELF_OK);
+}
+
+void relf_close(relf_t* relf)
+{
+    relf_unmap(relf);
+    free(relf->segments);
+    free(relf->sections);
 }

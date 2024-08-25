@@ -58,7 +58,10 @@ typedef struct {
     uint32_t type;
     uint32_t flags;
 
-    const char* name;
+    union {
+        uint32_t si_name; // index in string table
+        const char* name;
+    };
 
     uint64_t f_offset;
     uint64_t f_size;
@@ -71,6 +74,11 @@ typedef struct {
     // for symbol table will tell size of symbol entry
     uint64_t entsize;
 } relf_section_t;
+
+typedef struct {
+    const char** strings;
+    unsigned string_num;
+} relf_string_table_t;
 
 // relf instance
 typedef struct {
@@ -85,9 +93,6 @@ typedef struct {
 
     relf_section_t* sections;
     unsigned section_num;
-
-    const char** strings;
-    unsigned string_num;
 } relf_t;
 
 // opens ELF file, checks ELF magic and maps it into memory
