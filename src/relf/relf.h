@@ -75,6 +75,19 @@ typedef struct {
     uint64_t entsize;
 } relf_section_t;
 
+// ELF symbol
+typedef struct {
+    const char* name;
+    
+    uint64_t value;
+    uint64_t size;
+
+    unsigned info;
+    unsigned other;
+
+    const relf_section_t* section;
+} relf_symbol_t;
+
 // relf instance
 typedef struct {
     void* image;
@@ -88,6 +101,9 @@ typedef struct {
 
     relf_section_t* sections;
     unsigned section_num;
+
+    relf_symbol_t* symbols;
+    unsigned symbol_num;
 } relf_t;
 
 // opens ELF file, checks ELF magic and maps it into memory

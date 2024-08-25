@@ -252,6 +252,61 @@ relf_value_t relf_open(relf_t* relf, const char* path)
                 break;
         }
     }
+
+    // load symbol info
+    relf->symbol_num = symtab->f_size / symtab->entsize;
+    relf->symbols = (relf_symbol_t*)calloc(sizeof(relf_symbol_t), relf->symbol_num);
+
+    if (relf->type == RELF_64BIT)
+    {
+        for (unsigned i = 0; i < relf->symbol_num; i++)
+        {
+            const Elf64_Sym* hdr = (const Elf64_Sym*)((char*)relf->image
+                + symtab->f_offset + i*symtab->entsize);
+            relf_symbol_t* symbol = &relf->symbols[i];
+
+            if (hdr->st_name)
+                symbol->name = (const char*)relf->image + strtab->f_offset + hdr->st_name;
+            else symbol->name = NULL;
+
+            symbol->value = hdr->st_value;
+            symbol->size = hdr->st_size;
+
+            symbol->info = hdr->st_info;
+            symbol->other = hdr->st_other;
+
+            if (hdr->st_shndx < relf->section_num)
+                symbol->section = &relf->sections[hdr->st_shndx];
+            else symbol->section = NULL;
+
+            TRACE_SYMBOL(symbol);
+        }
+    }
+    else
+    {
+        for (unsigned i = 0; i < relf->symbol_num; i++)
+        {
+            const Elf32_Sym* hdr = (const Elf32_Sym*)((char*)relf->image
+                + symtab->f_offset + i*symtab->entsize);
+            relf_symbol_t* symbol = &relf->symbols[i];
+
+            if (hdr->st_name)
+                symbol->name = (const char*)relf->image + strtab->f_offset + hdr->st_name;
+            else symbol->name = NULL;
+
+            symbol->value = hdr->st_value;
+            symbol->size = hdr->st_size;
+
+            symbol->info = hdr->st_info;
+            symbol->other = hdr->st_other;
+
+            if (hdr->st_shndx < relf->section_num)
+                symbol->section = &relf->sections[hdr->st_shndx];
+            else symbol->section = NULL;
+
+            TRACE_SYMBOL(symbol);
+        }
+    }
     
     return RELF_ERROR(RELF_OK);
 }
@@ -261,4 +316,5 @@ void relf_close(relf_t* relf)
     relf_unmap(relf);
     free(relf->segments);
     free(relf->sections);
+    free(relf->symbols);
 }

@@ -20,9 +20,17 @@
         section->link, section->info,                                                                               \
         section->entsize                                                                                            \
     )
+
+#define TRACE_SYMBOL(symbol)                                                                                        \
+    TRACE("symbol name %s value 0x%lx size %lu info %x other %x\n",                                                 \
+        symbol->name,                                                                                               \
+        symbol->value, symbol->size,                                                                                \
+        symbol->info, symbol->other                                                                                 \
+    )
 #else
 #define TRACE_SEGMENT(segment)
 #define TRACE_SECTION(section)
+#define TRACE_SYMBOL(symbol)
 #endif
 
 #endif
