@@ -73,6 +73,8 @@ relf_value_t relf_open(relf_t* relf, const char* path)
         TRACE("mmap failed errno %d %s\n", errno, strerror(errno));
         return RELF_ERROR(RELF_MMAP_FAILED);
     }
+
+    // now we need to parse segments and section headers
     
     return RELF_ERROR(RELF_OK);
 }
