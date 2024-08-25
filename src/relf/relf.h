@@ -75,11 +75,6 @@ typedef struct {
     uint64_t entsize;
 } relf_section_t;
 
-typedef struct {
-    const char** strings;
-    unsigned string_num;
-} relf_string_table_t;
-
 // relf instance
 typedef struct {
     void* image;

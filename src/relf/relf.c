@@ -234,6 +234,24 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             TRACE_SECTION(section);
         }
     }
+
+    // find section we're gonna use later
+    const relf_section_t* strtab = NULL, *symtab = NULL;
+    for (unsigned i = 0; i < relf->section_num; i++)
+    {
+        const relf_section_t* section = &relf->sections[i];
+        switch (section->type)
+        {
+            case SHT_STRTAB:
+                // we need symbol string table
+                if (i != e_shstrndx)
+                    strtab = section;
+                break;
+            case SHT_SYMTAB:
+                symtab = section;
+                break;
+        }
+    }
     
     return RELF_ERROR(RELF_OK);
 }
