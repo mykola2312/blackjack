@@ -29,7 +29,6 @@ typedef enum {
 
 // relf instance
 typedef struct {
-    int fd;
     void* image;
 
     // is it 64 or 32 bit mode

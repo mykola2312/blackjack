@@ -4,7 +4,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <string.h>
+#include <errno.h>
 
 relf_value_t relf_open(relf_t* relf, const char* path)
 {
@@ -13,12 +15,13 @@ relf_value_t relf_open(relf_t* relf, const char* path)
 
     // try stat file
     struct stat st = {0};
-    if (stat(path, &stat))
+    if (stat(path, &st))
         return RELF_ERROR(RELF_FAILED_OPEN);
     
+    TRACE("st_size %lu\n", st.st_size);
     // open file and read ELF header
-    relf->fd = open(path, O_RDONLY);
-    if (relf->fd < 0)
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
         return RELF_ERROR(RELF_FAILED_OPEN);
     
     union {
@@ -27,9 +30,9 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     } e;
 
     // read biggest value by default
-    if (read(relf->fd, &e.hdr64, sizeof(e.hdr64)) < sizeof(e.hdr64))
+    if (read(fd, &e.hdr64, sizeof(e.hdr64)) < sizeof(e.hdr64))
     {
-        close(relf->fd);
+        close(fd);
         return RELF_ERROR(RELF_FAILED_OPEN);
     }
 
@@ -38,7 +41,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     if (!memcmp(e.hdr64.e_ident, ELFMAG, sizeof(ELFMAG)))
     {
         // not an ELF file at all
-        close(relf->fd);
+        close(fd);
         return RELF_ERROR(RELF_NOT_AN_ELF);
     }
 
@@ -48,14 +51,28 @@ relf_value_t relf_open(relf_t* relf, const char* path)
         case ELFCLASS32: relf->type = RELF_32BIT; break;
         case ELFCLASS64: relf->type = RELF_64BIT; break;
         default:
-            close(relf->fd);
+            close(fd);
             return RELF_ERROR(RELF_UNSUPPORTED);
     }
 
     if (e.hdr64.e_ident[EI_DATA] != ELFDATA2LSB)
     {
         // not little endian, we can't work with that
-        close(relf->fd);
+        close(fd);
         return RELF_ERROR(RELF_UNSUPPORTED);
     }
+
+    // we don't care about ABI, OS, machine type or ELF type,
+    // as long as we got little endian we're good to go, so
+    // let's map file to memory
+    relf->image = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd); // we can close file after mmap
+    // but still check for errors
+    if (relf->image == MAP_FAILED)
+    {
+        TRACE("mmap failed errno %d %s\n", errno, strerror(errno));
+        return RELF_ERROR(RELF_MMAP_FAILED);
+    }
+    
+    return RELF_ERROR(RELF_OK);
 }
