@@ -25,7 +25,7 @@ $(OBJ_DIR)/%.o: %.s
 all: $(OBJ) $(DEPS)
 	$(CC) $(LDFLAGS) -shared -o $(BIN_DIR)/relf_dummy.so obj/relf_dummy.o
 	$(CC) $(LDFLAGS) -m32 -shared -o $(BIN_DIR)/relf_dummy32.so obj/relf_dummy.o32
-	$(CC) $(LDFLAGS) -o $(BIN_DIR)/relf_test obj/relf_test.o $(LIB_DIR)/librelf.a
+	$(CC) $(LDFLAGS) -o $(BIN_DIR)/relf_test obj/relf_test.o $(LIB_DIR)/librelf.a -ldl
 
 debug: CFLAGS += -DDEBUG -g
 debug: LDFLAGS += -g
