@@ -224,12 +224,12 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     // resolve strings
     if (e_shstrndx != SHN_UNDEF)
     {
-        const char* strtab = (const char*)relf->image
+        const char* shstrtab = (const char*)relf->image
             + relf->sections[e_shstrndx].f_offset;
         for (unsigned i = 0; i < relf->section_num; i++)
         {
             relf_section_t* section = &relf->sections[i];
-            section->name = strtab + section->si_name;
+            section->name = shstrtab + section->si_name;
 
             TRACE_SECTION(section);
         }
