@@ -217,6 +217,35 @@ relf_value_t relf_open(relf_t* relf, const char* path)
             TRACE_SECTION(section);
         }
     }
+
+    // load string table
+    unsigned e_shstrndx = SHN_UNDEF;
+    if (relf->type == RELF_64BIT)
+        e_shstrndx = ((const Elf64_Ehdr*)relf->image)->e_shstrndx;
+    else
+        e_shstrndx = ((const Elf32_Ehdr*)relf->image)->e_shstrndx;
+    
+    // NOTE: I should handle SHN_LORESERVE in e_phnum, e_shnum and e_shstrndx
+    // but that's non-existent use case when ELF has number of segments
+    // and sections that are exceeding uint16_t limit, so I don't care.
+    if (e_shstrndx != SHN_UNDEF)
+    {
+        // we have string table, so to ease parsing
+        // we gonna allocate array of char pointers
+        // but first we need enumerate and find out
+        // how many strings there are
+        const char* cur = (const char*)
+            relf->image + relf->sections[e_shstrndx].f_offset;
+        const char* end = cur + relf->sections[e_shstrndx].f_size;
+        while (cur < end)
+        {
+            TRACE("str %s\n", cur);
+            cur += strlen(cur) + 1;
+            relf->string_num++;
+        }
+
+        TRACE("string_num %u\n", relf->string_num);
+    }
     
     return RELF_ERROR(RELF_OK);
 }

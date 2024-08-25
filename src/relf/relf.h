@@ -80,11 +80,14 @@ typedef struct {
     // is it 64 or 32 bit mode
     relf_type_t type;
 
+    relf_segment_t* segments;
     unsigned segment_num;
+
+    relf_section_t* sections;
     unsigned section_num;
 
-    relf_segment_t* segments;
-    relf_section_t* sections;
+    const char** strings;
+    unsigned string_num;
 } relf_t;
 
 // opens ELF file, checks ELF magic and maps it into memory
