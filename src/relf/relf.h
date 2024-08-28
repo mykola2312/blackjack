@@ -14,19 +14,6 @@ typedef enum {
     RELF_OK             = 0,
 } relf_error_t;
 
-typedef union {
-    relf_error_t error;
-
-    // yeah, we're going to always use 64bit value so
-    // we won't get any undefined behavior regardless
-    // host and target architectures
-    uint64_t value;
-} relf_value_t;
-
-// supply relf_value_t type here
-#define RELF_IS_ERROR(v)    (v.error < 0)
-#define RELF_ERROR(e)       ((relf_value_t) {.error = e})
-
 typedef enum {
     RELF_32BIT,
     RELF_64BIT
@@ -108,7 +95,7 @@ typedef struct {
 
 // opens ELF file, checks ELF magic and maps it into memory
 // may load additional info like string table
-relf_value_t relf_open(relf_t* relf, const char* path);
+relf_error_t relf_open(relf_t* relf, const char* path);
 
 // closes mapping and file, frees any allocated memory in relf instance
 void relf_close(relf_t* relf);

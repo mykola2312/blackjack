@@ -29,7 +29,7 @@ static void relf_unmap(relf_t* relf)
     relf->image_size = 0;
 }
 
-relf_value_t relf_open(relf_t* relf, const char* path)
+relf_error_t relf_open(relf_t* relf, const char* path)
 {
     // reset struct
     memset(relf, '\0', sizeof(relf_t));
@@ -37,23 +37,23 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     // try stat file
     struct stat st = {0};
     if (stat(path, &st))
-        return RELF_ERROR(RELF_FAILED_OPEN);
+        return RELF_FAILED_OPEN;
     if (check_32bit_limit(st.st_size))
-        return RELF_ERROR(RELF_TOO_BIG);
+        return RELF_TOO_BIG;
 
     relf->image_size = (size_t)st.st_size;
     TRACE("image_size %lu\n", relf->image_size);
     // open file and read ELF header
     int fd = open(path, O_RDONLY);
     if (fd < 0)
-        return RELF_ERROR(RELF_FAILED_OPEN);
+        return RELF_FAILED_OPEN;
     
     // read ELF's ident header, which contains magic and type
     uint8_t e_ident[EI_NIDENT];
     if (read(fd, e_ident, EI_NIDENT) < EI_NIDENT)
     {
         close(fd);
-        return RELF_ERROR(RELF_FAILED_OPEN);
+        return RELF_FAILED_OPEN;
     }
 
     // check magic and decide ELF type
@@ -62,7 +62,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     {
         // not an ELF file at all
         close(fd);
-        return RELF_ERROR(RELF_NOT_AN_ELF);
+        return RELF_NOT_AN_ELF;
     }
 
     // 32 bit or 64 bit
@@ -72,14 +72,14 @@ relf_value_t relf_open(relf_t* relf, const char* path)
         case ELFCLASS64: relf->type = RELF_64BIT; break;
         default:
             close(fd);
-            return RELF_ERROR(RELF_UNSUPPORTED);
+            return RELF_UNSUPPORTED;
     }
 
     if (e_ident[EI_DATA] != ELFDATA2LSB)
     {
         // not little endian, we can't work with that
         close(fd);
-        return RELF_ERROR(RELF_UNSUPPORTED);
+        return RELF_UNSUPPORTED;
     }
 
     // we don't care about ABI, OS, machine type or ELF type,
@@ -91,7 +91,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
     if (relf->image == MAP_FAILED)
     {
         TRACE("mmap failed errno %d %s\n", errno, strerror(errno));
-        return RELF_ERROR(RELF_MMAP_FAILED);
+        return RELF_MMAP_FAILED;
     }
 
     // now we need to parse segments and section headers
@@ -308,7 +308,7 @@ relf_value_t relf_open(relf_t* relf, const char* path)
         }
     }
     
-    return RELF_ERROR(RELF_OK);
+    return RELF_OK;
 }
 
 void relf_close(relf_t* relf)
