@@ -4,12 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// composite error type
 typedef enum {
     RELF_MMAP_FAILED    = -5,   // file memory mapping failed
     RELF_UNSUPPORTED    = -4,   // big endian or not x86/x86-64 architecture
-    RELF_NOT_AN_ELF     = -3,   // wrong magic
-    RELF_TOO_BIG        = -2,   // file is over size_t limit
+    RELF_TOO_BIG        = -3,   // file is over size_t limit
+    RELF_NOT_AN_ELF     = -2,   // wrong magic
     RELF_FAILED_OPEN    = -1,   // failed to stat or open file
     RELF_OK             = 0,
 } relf_error_t;
@@ -92,6 +91,13 @@ typedef struct {
     relf_symbol_t* symbols;
     unsigned symbol_num;
 } relf_t;
+
+// tries to open ELF file, checks its magic and if everything ok
+// returns ELF type. In case of error, return -1
+// if "e_ident" is non-null, e_ident of ELF would be saved here,
+// in that case "e_ident" must provide at least EI_NIDENT bytes size place,
+// if "fd" is non-null, file won't be closed and file descriptor would be placed here
+int relf_file_check(const char* path);
 
 // opens ELF file, checks ELF magic and maps it into memory
 // may load additional info like string table

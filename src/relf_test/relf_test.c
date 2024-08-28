@@ -4,6 +4,8 @@
 
 int main(int argc, char** argv)
 {
+    printf("relf_file_check %u\n", relf_file_check(argv[1]));
+
     relf_t dummy;
     relf_open(&dummy, argv[1]);
 

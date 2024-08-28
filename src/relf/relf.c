@@ -10,6 +10,39 @@
 #include <stdlib.h>
 #include <errno.h>
 
+int relf_file_check(const char* path)
+{
+    uint8_t e_ident[EI_NIDENT] = {0};
+
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) return -1;
+
+    if (read(fd, e_ident, EI_NIDENT) < EI_NIDENT)
+    {
+        close(fd);
+        return -1;
+    }
+
+    if (!memcmp(e_ident, ELFMAG, sizeof(ELFMAG)))
+    {
+        close(fd);
+        return -1;
+    }
+
+    // now we need to read ELF type
+    // e_type comes right after e_ident in ELF header
+    uint16_t e_type;
+    if (read(fd, &e_type, sizeof(e_type)) < sizeof(e_type))
+    {
+        close(fd);
+        return -1;
+    }
+
+    close(fd);
+    // return ELF type
+    return e_type;
+}
+
 // returns 1 if size not suitable for 32 bit host
 static int check_32bit_limit(off_t st_size)
 {
