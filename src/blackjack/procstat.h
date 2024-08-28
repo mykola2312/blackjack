@@ -62,15 +62,18 @@ typedef struct {
 
     uint64_t f_offset;
     
-    unsigned dev_major;
-    unsigned dev_minor;
+    int dev_major;
+    int dev_minor;
 
     uint64_t inode;
 
-    const char* path;
+    char* path;         // don't forget to free
 } procstat_map_t;
 
 // parse process file mappings. return 0 on success and -1 on error
 int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count);
+
+// will take care of freeing everything related to procstat_map_t lists
+void procstat_free_maps(procstat_map_t* maps, size_t count);
 
 #endif

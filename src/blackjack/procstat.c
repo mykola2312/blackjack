@@ -4,9 +4,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <ctype.h>
 
 int procstat_parse_status(pid_t pid, procstat_status_t* status)
@@ -231,7 +233,6 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
     while (1)
     {
         ssize_t rd = read(fd, buffer + bufferOffset, blockSize);
-        TRACE("rd %lu\n", rd);
         if (rd == -1)
         {
             // error
@@ -258,7 +259,80 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
     }
     // we got our maps buffer, now we can close file
     close(fd);
+    
+    procstat_map_t* _maps = NULL;
+    size_t _count = 0;
 
-    TRACE("buffer: %s", buffer);
+    char* lineptr = NULL, *line = strtok_r(buffer, "\n", &lineptr);
+    while (line != NULL)
+    {
+        // now we need to parse fields
+        char* fieldptr = NULL;
+        const char* v_range = strtok_r(line, " ", &fieldptr);
+        const char* perms = strtok_r(NULL, " ", &fieldptr);
+        const char* offset = strtok_r(NULL, " ", &fieldptr);
+        const char* device = strtok_r(NULL, " ", &fieldptr);
+        const char* inode = strtok_r(NULL, " ", &fieldptr);
+        const char* pathname = strtok_r(NULL, " ", &fieldptr);
+
+        // allocate new map entry
+        if (_maps) _maps = (procstat_map_t*)realloc(_maps, ++_count * sizeof(procstat_map_t));
+        else _maps = (procstat_map_t*)malloc(++_count * sizeof(procstat_map_t));
+        
+        procstat_map_t* map = &_maps[_count - 1];
+        memset(map, '\0', sizeof(procstat_map_t));
+        // v_start and v_end
+        sscanf(v_range, "%"SCNx64 "-" "%"SCNx64, &map->v_start, &map->v_end);
+        // prot and flags
+        for (const char* c = perms; *c; c++)
+        {
+            switch (*c)
+            {
+                // prot
+                case 'r': map->prot |= PROT_READ; break;
+                case 'w': map->prot |= PROT_WRITE; break;
+                case 'x': map->prot |= PROT_EXEC; break;
+                // flags
+                case 'p': map->flags |= MAP_PRIVATE; break;
+                case 's': map->flags |= MAP_SHARED; break;
+                case '-': continue;
+                default:
+                    TRACE("unknown perm %c\n", *c);
+                    break;
+            }
+        }
+        // f_offset
+        map->f_offset = strtoull(offset, NULL, 10);
+        // dev_major and dev_minor
+        sscanf(device, "%d:%d", &map->dev_major, &map->dev_minor);
+        // inode
+        map->inode = strtoull(inode, NULL, 10);
+        // path
+        if (pathname) map->path = strdup(pathname);
+
+        TRACE("map v_start %lx v_end %lx prot %x flags %x f_offset %x dev_major %u dev_minor %u inode %lu path %s\n",
+            map->v_start, map->v_end,
+            map->prot, map->flags,
+            map->f_offset,
+            map->dev_major, map->dev_minor,
+            map->inode,
+            map->path
+        );
+
+        line = strtok_r(NULL, "\n", &lineptr);
+    }
+
+    free(buffer);
+
+    *maps = _maps;
+    *count = _count;
+
     return 0;
+}
+
+void procstat_free_maps(procstat_map_t* maps, size_t count)
+{
+    for (unsigned i = 0; i < count; i++)
+        if (maps[i].path) free(maps[i].path);
+    free(maps);
 }

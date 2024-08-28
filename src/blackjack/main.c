@@ -27,8 +27,12 @@ int main(int argc, char** argv)
 {
     // test test
     {
-        procstat_parse_maps(1, NULL, NULL);
+        procstat_map_t* maps;
+        size_t map_count;
+
+        procstat_parse_maps(1, &maps, &map_count);
         
+        procstat_free_maps(maps, map_count);
         return 0;
     }
 
