@@ -25,6 +25,8 @@ int procstat_parse_status(pid_t pid, procstat_status_t* status)
 
     if (rd < 1) return 1;
 
+    memset(status, '\0', sizeof(procstat_status_t));
+
     char* lineptr = NULL, *line = strtok_r(buffer, "\n", &lineptr);
     while (line != NULL)
     {
@@ -33,7 +35,9 @@ int procstat_parse_status(pid_t pid, procstat_status_t* status)
         const char* value = (const char*)strtok_r(NULL, ":\t", &fieldptr);
 
         if (!strcmp(key, "Name"))
-            strncpy(status->name, value, MAX_PROCESS_NAME);
+        {
+            if (value) status->name = strdup(value);
+        }
         else if (!strcmp(key, "Umask"))
             status->umask = (unsigned int)strtoul(value, NULL, 8);
         else if (!strcmp(key, "State"))
@@ -57,6 +61,13 @@ int procstat_parse_status(pid_t pid, procstat_status_t* status)
     }
 
     return 0;
+}
+
+void procstat_free_status_list(procstat_status_t* list, size_t count)
+{
+    for (unsigned i = 0; i < count; i++)
+        if (list[i].name) free(list[i].name);
+    free(list);
 }
 
 static int is_numeric(const char* str)
@@ -310,7 +321,7 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
         // path
         if (pathname) map->path = strdup(pathname);
 
-        TRACE("map v_start %lx v_end %lx prot %x flags %x f_offset %x dev_major %u dev_minor %u inode %lu path %s\n",
+        TRACE("map v_start %lx v_end %lx prot %x flags %x f_offset %lx dev_major %u dev_minor %u inode %lu path %s\n",
             map->v_start, map->v_end,
             map->prot, map->flags,
             map->f_offset,

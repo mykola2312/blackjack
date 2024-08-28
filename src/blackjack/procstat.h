@@ -15,9 +15,8 @@ typedef enum {
     ZOMBIE                  = 'Z'
 } procstat_state_t;
 
-#define MAX_PROCESS_NAME 256
 typedef struct {
-    char name[MAX_PROCESS_NAME];
+    char* name;
     mode_t umask;
     procstat_state_t state;
     pid_t tgid;
@@ -32,6 +31,9 @@ typedef struct {
 // parse process status from procfs. returns 0 no errors and 1 on any kind of error
 // error information obtain from errno
 int procstat_parse_status(pid_t pid, procstat_status_t* status);
+
+// free all procstat status list entries
+void procstat_free_status_list(procstat_status_t* list, size_t count);
 
 // find any process that matches name, case insensitive.
 // list pointer must point to NULL-initialized pointer, and count pointer must pount to initialized 0

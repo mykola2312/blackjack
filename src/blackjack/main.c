@@ -25,7 +25,7 @@ void print_status(procstat_status_t* proc)
 
 int main(int argc, char** argv)
 {
-    // test test
+    // map test
     {
         procstat_map_t* maps;
         size_t map_count;
@@ -64,14 +64,14 @@ int main(int argc, char** argv)
         if (procstat_get_threads(parent->pid, &threads, &thread_count))
         {
             fputs("failed to obtain process threads\n", stderr);
-            free(list);
+            procstat_free_status_list(list, count);
             return 1;
         }
 
         if (procstat_find_active(threads, thread_count, &active))
         {
             // no active threads - free list and continue
-            free(threads);
+            procstat_free_status_list(threads, thread_count);
             usleep(500*1000);
         }
         else
@@ -96,8 +96,8 @@ int main(int argc, char** argv)
     {
         fprintf(stderr, "failed to attach: %s\n", strerror(errno));
         
-        free(threads);
-        free(list);
+        procstat_free_status_list(threads, thread_count);
+        procstat_free_status_list(list, count);
         
         return 1;
     }
@@ -116,8 +116,8 @@ int main(int argc, char** argv)
 
     process_detach_all(threads, thread_count);
     
-    free(threads);
-    free(list);
+    procstat_free_status_list(threads, thread_count);
+    procstat_free_status_list(list, count);
     
     return 0;
 }
