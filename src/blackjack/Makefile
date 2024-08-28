@@ -4,9 +4,9 @@ CFLAGS				=	-Wall -I$(INC_DIR)
 ASFLAGS				=
 LDFLAGS				=	-z noexecstack -lcap
 
-SRC		=	main.c process.c
+SRC		=	main.c procstat.c process.c
 OBJ		:=	$(addprefix $(OBJ_DIR)/,$(patsubst %.s,%.o,$(patsubst %.c,%.o,$(SRC))))
-DEPS	=	process.h process_debug.h
+DEPS	=	procstat.h process.h process_debug.h
 
 $(OBJ_DIR)/%.o: %.c
 	@mkdir -p $(OBJ_DIR)

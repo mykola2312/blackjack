@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "process.h"
+#include "blackjack/procstat.h"
+#include "blackjack/process.h"
 
-void print_process(process_status_t* proc)
+void print_status(procstat_status_t* proc)
 {
     puts("Process:");
     printf("name: %s\n", proc->name);
@@ -24,39 +25,39 @@ void print_process(process_status_t* proc)
 
 int main(int argc, char** argv)
 {
-    process_status_t* list = NULL;
+    procstat_status_t* list = NULL;
     size_t count = 0;
 
     // find process
-    process_by_name("dummy_target", &list, &count);
+    procstat_by_name("dummy_target", &list, &count);
     // get real parent
-    process_status_t* parent;
-    if (process_determine_parent(list, count, &parent))
+    procstat_status_t* parent;
+    if (procstat_determine_parent(list, count, &parent))
     {
         fputs("unable to determine parent process. exiting\n", stderr);
         free(list);
         return 1;
     }
 
-    print_process(parent);
+    print_status(parent);
 
     // find active thread
     puts("Looking for active thread..");
     
-    process_status_t* threads = NULL;
+    procstat_status_t* threads = NULL;
     size_t thread_count = 0;
     
-    process_status_t* active;
+    procstat_status_t* active;
     while (1)
     {
-        if (process_get_threads(parent->pid, &threads, &thread_count))
+        if (procstat_get_threads(parent->pid, &threads, &thread_count))
         {
             fputs("failed to obtain process threads\n", stderr);
             free(list);
             return 1;
         }
 
-        if (process_find_active(threads, thread_count, &active))
+        if (procstat_find_active(threads, thread_count, &active))
         {
             // no active threads - free list and continue
             free(threads);
@@ -70,7 +71,7 @@ int main(int argc, char** argv)
     }
 
     puts("Active thread:");
-    print_process(active);
+    print_status(active);
 
     if (!process_ptrace_permissions())
     {
