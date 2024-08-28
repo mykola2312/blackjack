@@ -25,6 +25,13 @@ void print_status(procstat_status_t* proc)
 
 int main(int argc, char** argv)
 {
+    // test test
+    {
+        procstat_parse_maps(1, NULL, NULL);
+        
+        return 0;
+    }
+
     procstat_status_t* list = NULL;
     size_t count = 0;
 

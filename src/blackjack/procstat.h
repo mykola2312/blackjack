@@ -1,6 +1,7 @@
 #ifndef __PROCSTAT_H
 #define __PROCSTAT_H
 
+#include <stdint.h>
 #include <sys/types.h>
 
 typedef enum {
@@ -51,5 +52,25 @@ int procstat_is_considered_active(procstat_state_t state);
 
 // find any active (running) thread and returns 0 and success, otherwise non zero
 int procstat_find_active(procstat_status_t* list, size_t count, procstat_status_t** thread);
+
+typedef struct {
+    uint64_t v_start;
+    uint64_t v_end;
+    
+    int prot;
+    int flags;
+
+    uint64_t f_offset;
+    
+    unsigned dev_major;
+    unsigned dev_minor;
+
+    uint64_t inode;
+
+    const char* path;
+} procstat_map_t;
+
+// parse process file mappings. return 0 on success and -1 on error
+int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count);
 
 #endif

@@ -212,3 +212,53 @@ int procstat_find_active(procstat_status_t* list, size_t count, procstat_status_
     }
     return 1;
 }
+
+int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
+{
+    // open proc maps
+    char mapsPath[256] = {0};
+    snprintf(mapsPath, sizeof(mapsPath), "/proc/%d/maps", pid);
+
+    int fd = open(mapsPath, O_RDONLY);
+    if (fd < 0) return -1;
+    
+    // now, block by block read contents
+    const unsigned blockSize = 512;
+    
+    char* buffer = (char*)malloc(blockSize);
+    unsigned bufferOffset = 0;
+
+    while (1)
+    {
+        ssize_t rd = read(fd, buffer + bufferOffset, blockSize);
+        TRACE("rd %lu\n", rd);
+        if (rd == -1)
+        {
+            // error
+            free(buffer);
+            close(fd);
+            return -1;
+        }
+        else if (rd < blockSize)
+        {
+            // we've encountered last block, so set bufferOffset
+            // and terminate last line with zero byte
+            bufferOffset += rd;
+            buffer[bufferOffset] = '\0';
+            // finish reading
+            break;
+        }
+        else
+        {
+            // so rd is blockSize precisely, that means
+            // we need go further and read next block
+            bufferOffset += blockSize;
+            buffer = (char*)realloc(buffer, bufferOffset + blockSize);
+        }
+    }
+    // we got our maps buffer, now we can close file
+    close(fd);
+
+    TRACE("buffer: %s", buffer);
+    return 0;
+}
