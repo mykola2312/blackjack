@@ -313,7 +313,7 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
             }
         }
         // f_offset
-        map->f_offset = strtoull(offset, NULL, 10);
+        map->f_offset = strtoull(offset, NULL, 16);
         // dev_major and dev_minor
         sscanf(device, "%d:%d", &map->dev_major, &map->dev_minor);
         // inode
