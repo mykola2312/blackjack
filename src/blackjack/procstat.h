@@ -78,4 +78,27 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count);
 // will take care of freeing everything related to procstat_map_t lists
 void procstat_free_maps(procstat_map_t* maps, size_t count);
 
+// list of modules that are mapped into process memory
+typedef struct {
+    char* path;
+    char* name;
+
+    uint64_t v_base;    // address base mapped image
+
+    procstat_map_t* maps;
+    unsigned map_count;
+} procstat_module_t;
+
+typedef struct {
+    procstat_module_t* modules;
+    unsigned module_count;
+} procstat_modules_t;
+
+// analyze file mappings and parse them into modules
+// that way, we can figure where libc.so.6 loaded in memory
+procstat_modules_t* procstat_parse_modules(procstat_map_t* maps, size_t count);
+
+// free any allocated memory by procstat_parse_modules
+void procstat_free_modules(procstat_modules_t* modules);
+
 #endif
