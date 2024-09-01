@@ -690,15 +690,24 @@ typedef struct {
     void* items;
     unsigned count;
 } __mlist_proto_t;
-#define __MLIST_LIST_SIZEOF             sizeof(__mlist_proto_t)
-#define __MLIST_ITEM_SIZE(list_type)    __MLIST_##list_type##_ITEM_SIZE
+
+typedef void (*__mlist_callback_t)(__mlist_proto_t*);
+
+#define __MLIST_LIST_SIZEOF                     sizeof(__mlist_proto_t)
+#define __MLIST_ITEM_SIZE(list_type)            __MLIST_##list_type##_ITEM_SIZE
+#define __MLIST_ITEM_CALLBACK_TYPE(list_type)   __MLIST_##list_type##_ITEM_CALLBACK_TYPE
+#define __MLIST_ITEM_CALLBACK(list_type)        __MLIST_##list_type##_ITEM_CALLBACK
 
 // declare typedef struct with name "list_type" that would have field
 // item pointer of type "item_type" and name "item_name" with count field
 // of name "count_name". For example:
-// MLIST_DECLARE(procstat_modules_t, procstat_module_t, modules, module_count);
-#define MLIST_DECLARE(list_type, item_type, item_name, count_name)                              \
+// MLIST_DECLARE(procstat_modules_t, procstat_module_t, modules, module_count, NULL);
+// if "item_callback" is non-null, it would be called on each item before
+// freeing item array
+#define MLIST_DECLARE(list_type, item_type, item_name, count_name, item_callback)               \
     static const unsigned __MLIST_ITEM_SIZE(list_type) = sizeof(item_type);                     \
+    typedef void (*__MLIST_ITEM_CALLBACK_TYPE(list_type))(item_type*);                          \
+    __MLIST_ITEM_CALLBACK_TYPE(list_type) __MLIST_ITEM_CALLBACK(list_type) = item_callback;     \
     typedef struct {                                                                            \
         item_type* item_name;                                                                   \
         unsigned count;                                                                         \
@@ -718,14 +727,26 @@ typedef struct {
     }
 // calculate address for last item, useful right after MLIST_ADD. You should
 // cast it to your item_type
+#define MLIST_AT(list_type, list, idx)                                                          \
+    ((uint8_t*)((__mlist_proto_t*)list)->items + (idx) * __MLIST_ITEM_SIZE(list_type))
 #define MLIST_LAST(list_type, list)                                                             \
-    ((uint8_t*)((__mlist_proto_t*)list)->items                                                  \
-        + (((__mlist_proto_t*)list)->count - 1) * __MLIST_ITEM_SIZE(list_type))
+    MLIST_AT(list_type, list, (((__mlist_proto_t*)list)->count - 1))
 // free mlist structure with item array (if any allocated)
-#define MLIST_FREE(list)                                                                        \
+#define MLIST_FREE(list_type, list)                                                             \
     {                                                                                           \
         __mlist_proto_t* l = (__mlist_proto_t*)list;                                            \
-        if (l->items) free(l->items);                                                           \
+        if (l->items)                                                                           \
+        {                                                                                       \
+            if (__MLIST_ITEM_CALLBACK(list_type))                                               \
+            {                                                                                   \
+                for (unsigned i = 0; i < l->count; i++)                                         \
+                {                                                                               \
+                    ((__mlist_callback_t)__MLIST_ITEM_CALLBACK(                                 \
+                        list_type))((__mlist_proto_t*)MLIST_AT(list_type, list, i));            \
+                }                                                                               \
+            }                                                                                   \
+            free(l->items);                                                                     \
+        }                                                                                       \
         free(l);                                                                                \
     }
 

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <blackjack/mlist.h>
 
 typedef enum {
     UNINTERRUPTABLE_SLEEP   = 'D',
@@ -89,10 +90,7 @@ typedef struct {
     unsigned map_count;
 } procstat_module_t;
 
-typedef struct {
-    procstat_module_t* modules;
-    unsigned module_count;
-} procstat_modules_t;
+MLIST_DECLARE(procstat_modules_t, procstat_module_t, modules, module_count);
 
 // analyze file mappings and parse them into modules
 // that way, we can figure where libc.so.6 loaded in memory
