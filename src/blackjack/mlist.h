@@ -707,7 +707,9 @@ typedef void (*__mlist_callback_t)(__mlist_proto_t*);
 #define MLIST_DECLARE(list_type, item_type, item_name, count_name, item_callback)               \
     static const unsigned __MLIST_ITEM_SIZE(list_type) = sizeof(item_type);                     \
     typedef void (*__MLIST_ITEM_CALLBACK_TYPE(list_type))(item_type*);                          \
-    __MLIST_ITEM_CALLBACK_TYPE(list_type) __MLIST_ITEM_CALLBACK(list_type) = item_callback;     \
+    static const __MLIST_ITEM_CALLBACK_TYPE(list_type)                                          \
+    __attribute__((unused)) __MLIST_ITEM_CALLBACK(list_type)                                    \
+      = item_callback;                                                                          \
     typedef struct {                                                                            \
         item_type* item_name;                                                                   \
         unsigned count;                                                                         \

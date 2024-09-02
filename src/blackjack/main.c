@@ -27,12 +27,9 @@ int main(int argc, char** argv)
 {
     // map test
     {
-        procstat_map_t* maps;
-        size_t map_count;
-
-        procstat_parse_maps(1, &maps, &map_count);
+        procstat_maps_t* maps = procstat_parse_maps(1);
         
-        procstat_free_maps(maps, map_count);
+        procstat_free_maps(maps);
         return 0;
     }
 

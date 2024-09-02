@@ -226,14 +226,19 @@ int procstat_find_active(procstat_status_t* list, size_t count, procstat_status_
     return 1;
 }
 
-int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
+void procstat_free_map(procstat_map_t* map)
+{
+    if (map->path) free(map->path);
+}
+
+procstat_maps_t* procstat_parse_maps(pid_t pid)
 {
     // open proc maps
     char mapsPath[256] = {0};
     snprintf(mapsPath, sizeof(mapsPath), "/proc/%d/maps", pid);
 
     int fd = open(mapsPath, O_RDONLY);
-    if (fd < 0) return -1;
+    if (fd < 0) return NULL;
     
     // now, block by block read contents
     const unsigned blockSize = 512;
@@ -249,7 +254,7 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
             // error
             free(buffer);
             close(fd);
-            return -1;
+            return NULL;
         }
         else if (rd < blockSize)
         {
@@ -271,8 +276,8 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
     // we got our maps buffer, now we can close file
     close(fd);
     
-    procstat_map_t* _maps = NULL;
-    size_t _count = 0;
+    procstat_maps_t* maps;
+    MLIST_ALLOC(procstat_maps_t, maps);
 
     char* lineptr = NULL, *line = strtok_r(buffer, "\n", &lineptr);
     while (line != NULL)
@@ -287,10 +292,9 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
         const char* pathname = strtok_r(NULL, " ", &fieldptr);
 
         // allocate new map entry
-        if (_maps) _maps = (procstat_map_t*)realloc(_maps, ++_count * sizeof(procstat_map_t));
-        else _maps = (procstat_map_t*)malloc(++_count * sizeof(procstat_map_t));
+        MLIST_ADD(procstat_maps_t, maps);
         
-        procstat_map_t* map = &_maps[_count - 1];
+        procstat_map_t* map = (procstat_map_t*)MLIST_LAST(procstat_maps_t, maps);
         memset(map, '\0', sizeof(procstat_map_t));
         // v_start and v_end
         sscanf(v_range, "%"SCNx64 "-" "%"SCNx64, &map->v_start, &map->v_end);
@@ -335,15 +339,10 @@ int procstat_parse_maps(pid_t pid, procstat_map_t** maps, size_t* count)
 
     free(buffer);
 
-    *maps = _maps;
-    *count = _count;
-
-    return 0;
+    return maps;
 }
 
-void procstat_free_maps(procstat_map_t* maps, size_t count)
+void procstat_free_maps(procstat_maps_t* maps)
 {
-    for (unsigned i = 0; i < count; i++)
-        if (maps[i].path) free(maps[i].path);
-    free(maps);
+    MLIST_FREE(procstat_maps_t, maps);
 }
